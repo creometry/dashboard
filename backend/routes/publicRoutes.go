@@ -8,10 +8,9 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-
 func CreateRoutes(app *fiber.App) {
 
-	v1:=app.Group("/api/v1")
+	v1 := app.Group("/api/v1")
 	v1.Post("/project", pr.CreateProject)
 	v1.Post("/add-user-to-project", us.AddUserToProject)
 	v1.Get("/namespaces", controllers.GetAllNamespaces)

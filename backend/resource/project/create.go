@@ -17,10 +17,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-
 func CreateProject(usrProjectName string) (kubeconfig string, err error) {
 
-	projectId,err := createRancherProject(usrProjectName)
+	projectId, err := createRancherProject(usrProjectName)
 	if err != nil {
 		return "", err
 	}
@@ -50,7 +49,7 @@ func CreateProject(usrProjectName string) (kubeconfig string, err error) {
 
 }
 
-func createRancherProject(usrProjectName string) (string,error) {
+func createRancherProject(usrProjectName string) (string, error) {
 	req, err := http.NewRequest("POST", os.Getenv("CREATE_PROJECT_URL"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"name":"%s","clusterId":"%s"}`, usrProjectName, os.Getenv("CLUSTER_ID")))))
 	if err != nil {
 		return "", err
@@ -76,7 +75,7 @@ func createRancherProject(usrProjectName string) (string,error) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	
+
 	return dt.ProjectId, nil
 }
 

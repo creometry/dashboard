@@ -16,7 +16,7 @@ func GetNetworkPolicies(namespace string) ([]networking.NetworkPolicy, error) {
 	networkPoliciesm, err := networkPoliciesClient.List(context.TODO(), metav1.ListOptions{})
 	return networkPoliciesm.Items, err
 }
-func GetNetworkPolicy(namespace string,networkPolicyName string ) (networking.NetworkPolicy, error) {
+func GetNetworkPolicy(namespace string, networkPolicyName string) (networking.NetworkPolicy, error) {
 	networkPoliciesClient := auth.MyClientSet.NetworkingV1().NetworkPolicies(namespace)
 	networkPolicy, err := networkPoliciesClient.Get(context.TODO(), networkPolicyName, metav1.GetOptions{})
 	return *networkPolicy, err

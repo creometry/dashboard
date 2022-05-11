@@ -2,9 +2,8 @@ package project
 
 import "fmt"
 
-
 type ReqData struct {
-	UsrProjectName string `json:"projectName"` 
+	UsrProjectName string `json:"projectName"`
 }
 
 func (r *ReqData) Validate() error {
@@ -13,7 +12,6 @@ func (r *ReqData) Validate() error {
 	}
 	return nil
 }
-
 
 type RespData struct {
 	ProjectId string `json:"id"`

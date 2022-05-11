@@ -10,18 +10,18 @@ import (
 
 var MyClientSet *kubernetes.Clientset
 
-func CreateKubernetesClient(){
+func CreateKubernetesClient() {
 	kubeconfig := flag.String("kubeconfig", "./kubeconfig.yaml", "")
 	flag.Parse()
-	config,err:=clientcmd.BuildConfigFromFlags("",*kubeconfig)	
+	config, err := clientcmd.BuildConfigFromFlags("", *kubeconfig)
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	clientset,err:=kubernetes.NewForConfig(config)
+	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		log.Fatal(err)
 	}
-	MyClientSet=clientset
+	MyClientSet = clientset
 }

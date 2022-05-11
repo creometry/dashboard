@@ -9,7 +9,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
-
 func GetEndpoints(namespace string) ([]v1.Endpoints, error) {
 
 	endpointsClient := auth.MyClientSet.CoreV1().Endpoints(namespace)

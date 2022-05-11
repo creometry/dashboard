@@ -2,11 +2,10 @@ package user
 
 import "fmt"
 
-
 type ReqData struct {
 	RoleTemplateId string `json:"roleTemplateId"`
-	UserId string `json:"userId"`
-	ProjectId string `json:"projectId"`
+	UserId         string `json:"userId"`
+	ProjectId      string `json:"projectId"`
 }
 
 func (r *ReqData) Validate() error {
@@ -25,6 +24,6 @@ func (r *ReqData) Validate() error {
 
 type RespData struct {
 	RoleTemplateId string `json:"roleTemplateId"`
-	Name string `json:"name"`
-	Type string `json:"type"`
+	Name           string `json:"name"`
+	Type           string `json:"type"`
 }

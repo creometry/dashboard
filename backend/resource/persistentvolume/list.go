@@ -9,7 +9,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
-
 func GetPersistentVolumes(namespace string) ([]v1.PersistentVolume, error) {
 
 	pvClient := auth.MyClientSet.CoreV1().PersistentVolumes()

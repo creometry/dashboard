@@ -10,7 +10,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
-
 func GetNamespaces() []v1.Namespace {
 	ns, err := auth.MyClientSet.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
 

@@ -9,7 +9,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
-
 func GetSecrets(namespace string) ([]v1.Secret, error) {
 
 	secretsClient := auth.MyClientSet.CoreV1().Secrets(namespace)

@@ -8,8 +8,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-
-
 func GetDeployments(namespace string) ([]appsv1.Deployment, error) {
 
 	deploymentsClient := auth.MyClientSet.AppsV1().Deployments(namespace)
@@ -19,7 +17,7 @@ func GetDeployments(namespace string) ([]appsv1.Deployment, error) {
 
 }
 
-func  GetDeployment(namespace string, deploymentName string) (appsv1.Deployment, error) {
+func GetDeployment(namespace string, deploymentName string) (appsv1.Deployment, error) {
 
 	deploymentsClient := auth.MyClientSet.AppsV1().Deployments(namespace)
 

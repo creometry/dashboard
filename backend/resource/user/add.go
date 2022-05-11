@@ -9,10 +9,9 @@ import (
 	"os"
 )
 
-
 func AddUserToProject(data ReqData) (RespData, error) {
 
-	req, err := http.NewRequest("POST", os.Getenv("ADD_USER_TO_PROJECT_URL"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"userId":"%s","projectId":"%s","roleTemplateId":"%s"}`, data.UserId, data.ProjectId,data.RoleTemplateId))))
+	req, err := http.NewRequest("POST", os.Getenv("ADD_USER_TO_PROJECT_URL"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"userId":"%s","projectId":"%s","roleTemplateId":"%s"}`, data.UserId, data.ProjectId, data.RoleTemplateId))))
 	if err != nil {
 		return RespData{}, err
 	}
@@ -35,7 +34,7 @@ func AddUserToProject(data ReqData) (RespData, error) {
 	}
 	err = json.Unmarshal(body, &dt)
 	if err != nil {
-		return  RespData{}, err
+		return RespData{}, err
 	}
 
 	return dt, nil

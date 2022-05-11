@@ -8,9 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-
-
-func  GetConfigMaps(namespace string) ([]v1.ConfigMap, error) {
+func GetConfigMaps(namespace string) ([]v1.ConfigMap, error) {
 
 	configMapsClient := auth.MyClientSet.CoreV1().ConfigMaps(namespace)
 
@@ -19,7 +17,7 @@ func  GetConfigMaps(namespace string) ([]v1.ConfigMap, error) {
 
 }
 
-func  GetConfigMap(namespace string, configMapName string) (v1.ConfigMap, error) {
+func GetConfigMap(namespace string, configMapName string) (v1.ConfigMap, error) {
 
 	configMapsClient := auth.MyClientSet.CoreV1().ConfigMaps(namespace)
 
