@@ -3,6 +3,7 @@ package routes
 import (
 	controllers "github.com/Creometry/dashboard/controllers/list"
 	pr "github.com/Creometry/dashboard/controllers/project"
+	us "github.com/Creometry/dashboard/controllers/user"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -12,6 +13,7 @@ func CreateRoutes(app *fiber.App) {
 
 	v1:=app.Group("/api/v1")
 	v1.Post("/project", pr.CreateProject)
+	v1.Post("/add-user-to-project", us.AddUserToProject)
 	v1.Get("/namespaces", controllers.GetAllNamespaces)
 	v1.Get("/pods/:namespace", controllers.GetAllPods)
 	v1.Get("/pods/:namespace/:pod", controllers.GetPod)

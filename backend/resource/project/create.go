@@ -99,9 +99,7 @@ func createRancherProject(usrProjectName string) string {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	log.Println("response Status:", resp.Status)
-	log.Println("projectId:", dt.ProjectId)
+	
 	return dt.ProjectId
 }
 
