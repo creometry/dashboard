@@ -6,7 +6,7 @@ import (
 )
 
 
-func CreateVCluster(c *fiber.Ctx)error{
+func CreateProject(c *fiber.Ctx)error{
 	// parse the request body
 	reqData := new(project.ReqData)
 	if err := c.BodyParser(reqData); err != nil {
@@ -21,7 +21,7 @@ func CreateVCluster(c *fiber.Ctx)error{
 		})
 	}
 
-	kubeconfig,err:=project.CreateVCluster(reqData.Plan, reqData.UsrProjectName)
+	kubeconfig,err:=project.CreateProject(reqData.UsrProjectName)
 	if err!=nil{
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),

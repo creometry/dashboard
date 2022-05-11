@@ -11,7 +11,7 @@ import (
 func CreateRoutes(app *fiber.App) {
 
 	v1:=app.Group("/api/v1")
-	v1.Post("/vcluster", pr.CreateVCluster)
+	v1.Post("/project", pr.CreateProject)
 	v1.Get("/namespaces", controllers.GetAllNamespaces)
 	v1.Get("/pods/:namespace", controllers.GetAllPods)
 	v1.Get("/pods/:namespace/:pod", controllers.GetPod)

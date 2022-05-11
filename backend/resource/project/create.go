@@ -18,7 +18,7 @@ import (
 )
 
 
-func CreateVCluster(plan string, usrProjectName string) (kubeconfig string, err error) {
+func CreateProject(usrProjectName string) (kubeconfig string, err error) {
 
 	projectId := createRancherProject(usrProjectName)
 
@@ -43,7 +43,7 @@ func CreateVCluster(plan string, usrProjectName string) (kubeconfig string, err 
 	}
 	log.Println("Created Namespace:", newNs.Name)
 
-	var rs *v1.ResourceQuota
+	/*var rs *v1.ResourceQuota
 
 	switch plan {
 	case "silver":
@@ -67,7 +67,7 @@ func CreateVCluster(plan string, usrProjectName string) (kubeconfig string, err 
 	}
 	log.Println("Created ResourceQuota:", newRs.Name)
 
-	// install virtual cluster on the namespace and return kubeconfig
+	// install virtual cluster on the namespace and return kubeconfig*/
 
 	return "kubeconfig", nil
 
