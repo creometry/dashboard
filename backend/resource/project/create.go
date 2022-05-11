@@ -20,7 +20,10 @@ import (
 
 func CreateProject(usrProjectName string) (kubeconfig string, err error) {
 
-	projectId := createRancherProject(usrProjectName)
+	projectId,err := createRancherProject(usrProjectName)
+	if err != nil {
+		return "", err
+	}
 
 	// create a new namespace with annotation "projectId"
 	nsClient := auth.MyClientSet.CoreV1().Namespaces()
@@ -43,40 +46,14 @@ func CreateProject(usrProjectName string) (kubeconfig string, err error) {
 	}
 	log.Println("Created Namespace:", newNs.Name)
 
-	/*var rs *v1.ResourceQuota
-
-	switch plan {
-	case "silver":
-		rs = createResourseQuota("1", "1Gi", newNs.Name)
-		break
-	case "gold":
-		rs = createResourseQuota("2", "2Gi", newNs.Name)
-		break
-	case "platinum":
-		rs = createResourseQuota("4", "4Gi", newNs.Name)
-		break
-	default:
-		rs = createResourseQuota("1", "1Gi", newNs.Name)
-	}
-
-	// create resource quota for the namespace
-	newRs, err := auth.MyClientSet.CoreV1().ResourceQuotas(newNs.Name).Create(context.TODO(), rs, metav1.CreateOptions{})
-
-	if err != nil {
-		return "", err
-	}
-	log.Println("Created ResourceQuota:", newRs.Name)
-
-	// install virtual cluster on the namespace and return kubeconfig*/
-
 	return "kubeconfig", nil
 
 }
 
-func createRancherProject(usrProjectName string) string {
+func createRancherProject(usrProjectName string) (string,error) {
 	req, err := http.NewRequest("POST", os.Getenv("CREATE_PROJECT_URL"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"name":"%s","clusterId":"%s"}`, usrProjectName, os.Getenv("CLUSTER_ID")))))
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
 
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("RANCHER_TOKEN")))
@@ -85,7 +62,7 @@ func createRancherProject(usrProjectName string) string {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
 
 	defer resp.Body.Close()
@@ -100,7 +77,7 @@ func createRancherProject(usrProjectName string) string {
 		log.Fatal(err)
 	}
 	
-	return dt.ProjectId
+	return dt.ProjectId, nil
 }
 
 func createResourseQuota(cpu string, memory string, namespace string) *v1.ResourceQuota {
