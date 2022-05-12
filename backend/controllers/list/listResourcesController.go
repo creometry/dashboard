@@ -6,6 +6,7 @@ import (
 	"github.com/Creometry/dashboard/resource/deployment"
 	"github.com/Creometry/dashboard/resource/endpoint"
 	"github.com/Creometry/dashboard/resource/event"
+	"github.com/Creometry/dashboard/resource/horizontalpodautoscaler"
 	"github.com/Creometry/dashboard/resource/ingress"
 	"github.com/Creometry/dashboard/resource/job"
 	"github.com/Creometry/dashboard/resource/namespace"
@@ -388,5 +389,32 @@ func GetAllEvents(c *fiber.Ctx) error {
 	}
 	return c.JSON(fiber.Map{
 		"events": events,
+	})
+}
+
+func GetAllHorizontalPodAutoscalers(c *fiber.Ctx) error {
+	ns := c.Params("namespace")
+	horizontalPodAutoscalers, err := horizontalpodautoscaler.GetHorizontalPodAutoscalers(ns)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+	return c.JSON(fiber.Map{
+		"horizontalpodautoscalers": horizontalPodAutoscalers,
+	})
+}
+
+func GetHorizontalPodAutoscaler(c *fiber.Ctx) error {
+	ns := c.Params("namespace")
+	horizontalPodAutoscalerName := c.Params("horizontalpodautoscaler")
+	horizontalPodAutoscaler, err := horizontalpodautoscaler.GetHorizontalPodAutoscaler(ns, horizontalPodAutoscalerName)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+	return c.JSON(fiber.Map{
+		"horizontalpodautoscaler": horizontalPodAutoscaler,
 	})
 }
