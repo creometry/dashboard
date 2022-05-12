@@ -5,6 +5,7 @@ import (
 	"github.com/Creometry/dashboard/resource/cronjob"
 	"github.com/Creometry/dashboard/resource/deployment"
 	"github.com/Creometry/dashboard/resource/endpoint"
+	"github.com/Creometry/dashboard/resource/event"
 	"github.com/Creometry/dashboard/resource/ingress"
 	"github.com/Creometry/dashboard/resource/job"
 	"github.com/Creometry/dashboard/resource/namespace"
@@ -374,5 +375,18 @@ func GetNetworkPolicy(c *fiber.Ctx) error {
 	}
 	return c.JSON(fiber.Map{
 		"networkpolicy": networkPolicy,
+	})
+}
+
+func GetAllEvents(c *fiber.Ctx) error {
+	ns := c.Params("namespace")
+	events, err := event.GetEvents(ns)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+	return c.JSON(fiber.Map{
+		"events": events,
 	})
 }

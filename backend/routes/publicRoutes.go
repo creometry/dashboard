@@ -40,4 +40,5 @@ func CreateRoutes(app *fiber.App) {
 	v1.Get("/ingresses/:namespace/:ingress", controllers.GetIngress)
 	v1.Get("/networkpolicies/:namespace", controllers.GetAllNetworkPolicies)
 	v1.Get("/networkpolicies/:namespace/:networkpolicy", controllers.GetNetworkPolicy)
+	v1.Get("/events/:namespace", controllers.GetAllEvents)
 }
