@@ -9,9 +9,6 @@ import (
 	"github.com/Creometry/dashboard/resource/horizontalpodautoscaler"
 	"github.com/Creometry/dashboard/resource/ingress"
 	"github.com/Creometry/dashboard/resource/job"
-	"github.com/Creometry/dashboard/resource/namespace"
-	"github.com/Creometry/dashboard/resource/networkpolicy"
-	"github.com/Creometry/dashboard/resource/persistentvolume"
 	"github.com/Creometry/dashboard/resource/persistentvolumeclaim"
 	"github.com/Creometry/dashboard/resource/pod"
 	"github.com/Creometry/dashboard/resource/secret"
@@ -21,12 +18,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func GetAllNamespaces(c *fiber.Ctx) error {
-	ns := namespace.GetNamespaces()
-	return c.JSON(fiber.Map{
-		"namespaces": ns,
-	})
-}
 
 func GetAllPods(c *fiber.Ctx) error {
 	ns := c.Params("namespace")
@@ -190,33 +181,6 @@ func GetPersistentVolumeClaim(c *fiber.Ctx) error {
 	})
 }
 
-func GetAllPersistentVolumes(c *fiber.Ctx) error {
-	ns := c.Params("namespace")
-	pv, err := persistentvolume.GetPersistentVolumes(ns)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
-		})
-	}
-	return c.JSON(fiber.Map{
-		"pv": pv,
-	})
-}
-
-func GetPersistentVolume(c *fiber.Ctx) error {
-	ns := c.Params("namespace")
-	pvName := c.Params("pv")
-	pv, err := persistentvolume.GetPersistentVolume(ns, pvName)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
-		})
-	}
-	return c.JSON(fiber.Map{
-		"pv": pv,
-	})
-}
-
 func GetAllStatefulSets(c *fiber.Ctx) error {
 	ns := c.Params("namespace")
 	statefulSets, err := statefulset.GetStatefulSets(ns)
@@ -349,33 +313,6 @@ func GetIngress(c *fiber.Ctx) error {
 	}
 	return c.JSON(fiber.Map{
 		"ingress": ingress,
-	})
-}
-
-func GetAllNetworkPolicies(c *fiber.Ctx) error {
-	ns := c.Params("namespace")
-	networkPolicies, err := networkpolicy.GetNetworkPolicies(ns)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
-		})
-	}
-	return c.JSON(fiber.Map{
-		"networkpolicies": networkPolicies,
-	})
-}
-
-func GetNetworkPolicy(c *fiber.Ctx) error {
-	ns := c.Params("namespace")
-	networkPolicyName := c.Params("networkpolicy")
-	networkPolicy, err := networkpolicy.GetNetworkPolicy(ns, networkPolicyName)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
-		})
-	}
-	return c.JSON(fiber.Map{
-		"networkpolicy": networkPolicy,
 	})
 }
 
