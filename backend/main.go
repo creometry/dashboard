@@ -6,6 +6,7 @@ import (
 	"github.com/Creometry/dashboard/auth"
 	"github.com/Creometry/dashboard/routes"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 
 	"github.com/joho/godotenv"
 )
@@ -22,6 +23,13 @@ func main() {
 	}
 
 	app := fiber.New()
+
+	// add CORS
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: "http://localhost:3001",
+		AllowHeaders:  "Origin, Content-Type, Accept",
+	}))
+
 
 	routes.CreateRoutes(app)
 

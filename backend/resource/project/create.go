@@ -17,7 +17,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func CreateProject(usrProjectName string) (kubeconfig string, err error) {
+func CreateProject(usrProjectName string, plan string) (kubeconfig string, err error) {
 
 	projectId, err := createRancherProject(usrProjectName)
 	if err != nil {
@@ -44,6 +44,26 @@ func CreateProject(usrProjectName string) (kubeconfig string, err error) {
 		return "", err
 	}
 	log.Println("Created Namespace:", newNs.Name)
+
+	// create a new resource quota based on the plan
+	quotaClient := auth.MyClientSet.CoreV1().ResourceQuotas(newNs.Name)
+	var quota *v1.ResourceQuota
+	switch plan {
+	case "silver":
+		quota = createResourseQuota("1", "1Gi", newNs.Name)
+	case "gold":
+		quota = createResourseQuota("2", "2Gi", newNs.Name)
+	case "platinum":
+		quota = createResourseQuota("4", "4Gi", newNs.Name)
+	}
+
+	newQuota, err := quotaClient.Create(context.TODO(), quota, metav1.CreateOptions{})
+
+	if err != nil {
+		return "", err
+	}
+	log.Println("Created Quota:", newQuota.Name)
+
 
 	return "kubeconfig", nil
 
