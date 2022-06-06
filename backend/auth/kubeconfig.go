@@ -31,9 +31,7 @@ func CreateKubernetesClient() {
 }
 
 func CreateExtensionsClient() {
-	kubeconfig := flag.String("kubeconfig", "./kubeconfig.yaml", "")
-	flag.Parse()
-	config, err := clientcmd.BuildConfigFromFlags("", *kubeconfig)
+	config, err := clientcmd.BuildConfigFromFlags("", "./kubeconfig.yaml")
 
 	if err != nil {
 		log.Fatal(err)

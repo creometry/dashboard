@@ -2,10 +2,9 @@ package customresource
 
 import (
 	"context"
-	"runtime"
+	"encoding/json"
 
 	"github.com/Creometry/dashboard/auth"
-	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -15,39 +14,63 @@ func GetCustomResources(namespace string)([]interface{}, error) {
 	crdClient := auth.MyExtensionsClientSet.ApiextensionsV1().CustomResourceDefinitions()
 
 	list, err := crdClient.List(context.TODO(),metav1.ListOptions{})
-	var res runtime.Object
 	var resList []interface{}
+	var element interface{}
 
 	for _,crd := range list.Items {
-		crd = []apiextensionsv1.CustomResourceDefinition{removeNonServedVersions(crd)}[0]
+		
 		restClient, err := NewRESTClient(auth.Config, &crd)
 		if err != nil {
 			return nil, err
 		}
 
-		err= restClient.Get().NamespaceIfScoped(namespace,crd.Spec.Scope == apiextensionsv1.NamespaceScoped).Resource(crd.Spec.Names.Plural).Do(context.TODO()).Into(&res)
+		raw,err:= restClient.Get().NamespaceIfScoped(namespace,crd.Spec.Scope == apiextensionsv1.NamespaceScoped).Resource(crd.Spec.Names.Plural).Do(context.TODO()).Raw()
 
 		if err != nil {
 			return nil, err
 		}
 
-		resList = append(res, res)
+		// unmarshal the raw json into the list of resources (inumplemented)
+		err=json.Unmarshal(raw, &element)
+
+		if err != nil {
+			return nil, err
+		}
+
+		// add the custom resources to the list
+		resList = append(resList, element)
 		
 	}
 
-	
+	// return the list of custom resources
 	return resList, err
 }
 
-func removeNonServedVersions(crd apiextensionsv1.CustomResourceDefinition) apiextensionsv1.CustomResourceDefinition {
-	versions := make([]apiextensions.CustomResourceDefinitionVersion, 0)
+func GetCustomResource(namespace string, crdName string)(interface{}, error) {
+	crdClient := auth.MyExtensionsClientSet.ApiextensionsV1().CustomResourceDefinitions()
 
-	for _, version := range crd.Spec.Versions {
-		if version.Served {
-			versions = append(versions, version)
+	crd, err := crdClient.Get(context.TODO(),crdName,metav1.GetOptions{})
+	var element interface{}
+
+		restClient, err := NewRESTClient(auth.Config, crd)
+		if err != nil {
+			return nil, err
 		}
-	}
 
-	crd.Spec.Versions = versions
-	return crd
+		raw,err:= restClient.Get().NamespaceIfScoped(namespace,crd.Spec.Scope == apiextensionsv1.NamespaceScoped).Resource(crd.Spec.Names.Plural).Do(context.TODO()).Raw()
+
+		if err != nil {
+			return nil, err
+		}
+
+		// unmarshal the raw json into the list of resources (inumplemented)
+		err=json.Unmarshal(raw, &element)
+
+		if err != nil {
+			return nil, err
+		}
+
+
+	return element, err
 }
+

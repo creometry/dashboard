@@ -10,6 +10,12 @@ import (
 )
 
 func getCustomResourceDefinitionGroupVersion(crd *apiextensions.CustomResourceDefinition) schema.GroupVersion {
+	if len(crd.Spec.Versions) == 0 {
+		return schema.GroupVersion{
+			Group:   crd.Spec.Group,
+			Version: "v1",
+		}
+	}
 	return schema.GroupVersion{
 		Group:   crd.Spec.Group,
 		Version: crd.Spec.Versions[0].Name,

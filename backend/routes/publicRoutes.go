@@ -38,4 +38,6 @@ func CreateRoutes(app *fiber.App) {
 	v1.Get("/events/:namespace", controllers.GetAllEvents)
 	v1.Get("/horizontalpodautoscalers/:namespace", controllers.GetAllHorizontalPodAutoscalers)
 	v1.Get("/horizontalpodautoscalers/:namespace/:horizontalpodautoscaler", controllers.GetHorizontalPodAutoscaler)
+	v1.Get("/customresources/:namespace", controllers.GetAllCustomResources)
+	v1.Get("/customresources/:namespace/:customresource", controllers.GetCustomResource)
 }

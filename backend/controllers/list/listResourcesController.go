@@ -3,6 +3,7 @@ package controllers
 import (
 	"github.com/Creometry/dashboard/resource/configmap"
 	"github.com/Creometry/dashboard/resource/cronjob"
+	"github.com/Creometry/dashboard/resource/customresource"
 	"github.com/Creometry/dashboard/resource/deployment"
 	"github.com/Creometry/dashboard/resource/endpoint"
 	"github.com/Creometry/dashboard/resource/event"
@@ -353,5 +354,32 @@ func GetHorizontalPodAutoscaler(c *fiber.Ctx) error {
 	}
 	return c.JSON(fiber.Map{
 		"horizontalpodautoscaler": horizontalPodAutoscaler,
+	})
+}
+
+func GetAllCustomResources(c *fiber.Ctx) error {
+	ns := c.Params("namespace")
+	customResources, err := customresource.GetCustomResources(ns)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+	return c.JSON(fiber.Map{
+		"customresources": customResources,
+	})
+}
+
+func GetCustomResource(c *fiber.Ctx) error {
+	ns := c.Params("namespace")
+	customResourceName := c.Params("customresource")
+	customResource, err := customresource.GetCustomResource(ns, customResourceName)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+	return c.JSON(fiber.Map{
+		"customresource": customResource,
 	})
 }
