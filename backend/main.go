@@ -14,6 +14,7 @@ import (
 func main() {
 	// Create the client set
 	auth.CreateKubernetesClient()
+	auth.CreateExtensionsClient()
 
 	// Get config from .env file
 	err := godotenv.Load(".env")
