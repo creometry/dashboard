@@ -3,6 +3,8 @@ package project
 import (
 	"bytes"
 	"context"
+	"crypto/sha1"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -27,9 +29,16 @@ func CreateProject(usrProjectName string, plan string) (kubeconfig string, err e
 	// create a new namespace with annotation "projectId"
 	nsClient := auth.MyClientSet.CoreV1().Namespaces()
 
+	// hash the projectId using golang's sha256
+	h := sha1.New()
+	h.Write([]byte(projectId))
+	projectIdHash := base64.URLEncoding.EncodeToString(h.Sum(nil))
+
+
+
 	ns := &v1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: fmt.Sprintf(usrProjectName),
+			Name: fmt.Sprintf("%s-%s",usrProjectName, projectIdHash),
 			Annotations: map[string]string{
 				"field.cattle.io/projectId": fmt.Sprintf(projectId),
 			},
@@ -49,11 +58,11 @@ func CreateProject(usrProjectName string, plan string) (kubeconfig string, err e
 	quotaClient := auth.MyClientSet.CoreV1().ResourceQuotas(newNs.Name)
 	var quota *v1.ResourceQuota
 	switch plan {
-	case "silver":
+	case "Starter":
 		quota = createResourseQuota("1", "1Gi", newNs.Name)
-	case "gold":
+	case "Dev":
 		quota = createResourseQuota("2", "2Gi", newNs.Name)
-	case "platinum":
+	case "Pro":
 		quota = createResourseQuota("4", "4Gi", newNs.Name)
 	}
 
@@ -64,8 +73,12 @@ func CreateProject(usrProjectName string, plan string) (kubeconfig string, err e
 	}
 	log.Println("Created Quota:", newQuota.Name)
 
-
-	return "kubeconfig", nil
+	// get kubeconfig
+	kubeconfig, err = getKubeConfig()
+	if err != nil {
+		return "", err
+	}
+	return kubeconfig, nil
 
 }
 
@@ -112,4 +125,34 @@ func createResourseQuota(cpu string, memory string, namespace string) *v1.Resour
 			},
 		},
 	}
+}
+
+func getKubeConfig()(string, error) {
+	req, err := http.NewRequest("POST", os.Getenv("GET_KUBECONFIG_URL"), nil)
+	if err != nil {
+		return "", err
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("RANCHER_TOKEN")))
+
+	client := &http.Client{}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+
+	defer resp.Body.Close()
+	// parse response body
+	dt := Kubeconfig{}
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = json.Unmarshal(body, &dt)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return dt.Config, nil
 }

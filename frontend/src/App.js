@@ -2,6 +2,7 @@ import { useState } from "react";
 import axios from "axios";
 import loadingSpinner from "../src/loading.gif";
 import creometryLogo from "../src/creo.png";
+import { Resource } from "./components/Resource";
 
 export default function App() {
   const { REACT_APP_URL } = process.env;
@@ -15,6 +16,7 @@ export default function App() {
   const [network, setNetwork] = useState(false);
   const [storage, setStorage] = useState(false);
   const [hpa, setHpa] = useState(false);
+  const [observability, setObservability] = useState(false);
   const getResourceData = async (rs) => {
     setLoading(true);
     setResource(rs);
@@ -30,14 +32,14 @@ export default function App() {
     }
   };
   return (
-    <div className="bg-zinc-900 h-screen w-full flex">
-      <div className="lg:w-1/6 md:w-1/5 xs:w-1/4 h-full text-gray-400 bg-zinc-700 shadow-md flex flex-col items-center">
+    <div className="bg-zinc-900 w-full flex h-screen">
+      <div className="lg:w-1/6 w-1/4 h-7/6 text-gray-400 bg-zinc-700 shadow-md flex flex-col items-center overflow-y-scroll scrollbar-thin scrollbar-thumb-creo scrollbar-track-gray-500">
         <div className="h-12 w-12">
           <img src={creometryLogo} alt="logo" />
         </div>
         <ul className="font-semibold text-lg pt-4 w-full flex flex-col">
           <li
-            className="p-2 w-full rounded-sm hover:bg-creo hover:text-gray-100 cursor-pointer flex items-center justify-between"
+            className="p-2 w-full rounded-md hover:bg-creo hover:text-gray-100 cursor-pointer flex items-center justify-between"
             onClick={() => setWorkloads(!workloads)}
           >
             <div className="flex items-center justify-between w-full">
@@ -79,40 +81,24 @@ export default function App() {
           </li>
           {workloads && (
             <div className="ml-8">
-              <div
-                className="hover:bg-creo p-1 cursor-pointer hover:text-gray-100 rounded-sm"
-                onClick={() => getResourceData("pods")}
-              >
-                Pods
-              </div>
-              <div
-                className="hover:bg-creo p-1 cursor-pointer hover:text-gray-100 rounded-sm"
-                onClick={() => getResourceData("deployments")}
-              >
-                Deployments
-              </div>
-              <div
-                className="hover:bg-creo p-1 cursor-pointer hover:text-gray-100 rounded-sm"
-                onClick={() => getResourceData("statefulsets")}
-              >
-                StatefulSets
-              </div>
-              <div
-                className="hover:bg-creo p-1 cursor-pointer hover:text-gray-100 rounded-sm"
-                onClick={() => getResourceData("jobs")}
-              >
-                Jobs
-              </div>
-              <div
-                className="hover:bg-creo p-1 cursor-pointer hover:text-gray-100 rounded-sm"
-                onClick={() => getResourceData("cronjobs")}
-              >
-                Cronjobs
-              </div>
+              <Resource resourceName="Pods" getResourceData={getResourceData} />
+              <Resource
+                resourceName="Deployments"
+                getResourceData={getResourceData}
+              />
+              <Resource
+                resourceName="Statefulsets"
+                getResourceData={getResourceData}
+              />
+              <Resource resourceName="Jobs" getResourceData={getResourceData} />
+              <Resource
+                resourceName="Cronjobs"
+                getResourceData={getResourceData}
+              />
             </div>
           )}
           <li
-            className="p-2 w-full rounded-sm hover:bg-creo hover:text-gray-100 cursor-pointer flex items-center justify-between"
+            className="p-2 w-full rounded-md hover:bg-creo hover:text-gray-100 cursor-pointer flex items-center justify-between"
             onClick={() => setConfiguration(!configuration)}
           >
             <div className="flex items-center justify-between w-full">
@@ -154,22 +140,22 @@ export default function App() {
           </li>
           {configuration && (
             <div className="ml-8">
-              <div
-                className="hover:bg-creo p-1 cursor-pointer hover:text-gray-100 rounded-sm"
-                onClick={() => getResourceData("secrets")}
-              >
-                Secrets
-              </div>
-              <div
-                className="hover:bg-creo p-1 cursor-pointer hover:text-gray-100 rounded-sm"
-                onClick={() => getResourceData("configmaps")}
-              >
-                Configmaps
-              </div>
+              <Resource
+                resourceName="Configmaps"
+                getResourceData={getResourceData}
+              />
+              <Resource
+                resourceName="Secrets"
+                getResourceData={getResourceData}
+              />
+              <Resource
+                resourceName="Events"
+                getResourceData={getResourceData}
+              />
             </div>
           )}
           <li
-            className="p-2 w-full rounded-sm hover:bg-creo hover:text-gray-100 cursor-pointer flex items-center justify-between"
+            className="p-2 w-full rounded-md hover:bg-creo hover:text-gray-100 cursor-pointer flex items-center justify-between"
             onClick={() => setNetwork(!network)}
           >
             <div className="flex items-center justify-between w-full">
@@ -211,28 +197,22 @@ export default function App() {
           </li>
           {network && (
             <div className="ml-8">
-              <div
-                className="hover:bg-creo p-1 cursor-pointer hover:text-gray-100 rounded-sm"
-                onClick={() => getResourceData("services")}
-              >
-                Services
-              </div>
-              <div
-                className="hover:bg-creo p-1 cursor-pointer hover:text-gray-100 rounded-sm"
-                onClick={() => getResourceData("ingresses")}
-              >
-                Ingresses
-              </div>
-              <div
-                className="hover:bg-creo p-1 cursor-pointer hover:text-gray-100 rounded-sm"
-                onClick={() => getResourceData("endpoints")}
-              >
-                Endpoints
-              </div>
+              <Resource
+                resourceName="Services"
+                getResourceData={getResourceData}
+              />
+              <Resource
+                resourceName="Ingresses"
+                getResourceData={getResourceData}
+              />
+              <Resource
+                resourceName="Endpoints"
+                getResourceData={getResourceData}
+              />
             </div>
           )}
           <li
-            className="p-2 w-full rounded-sm hover:bg-creo hover:text-gray-100 cursor-pointer flex items-center justify-between"
+            className="p-2 w-full rounded-md hover:bg-creo hover:text-gray-100 cursor-pointer flex items-center justify-between"
             onClick={() => setStorage(!storage)}
           >
             <div className="flex items-center justify-between w-full">
@@ -274,16 +254,71 @@ export default function App() {
           </li>
           {storage && (
             <div className="ml-8">
-              <div
-                className="hover:bg-creo p-1 cursor-pointer hover:text-gray-100 rounded-sm"
-                onClick={() => getResourceData("pvcs")}
-              >
-                Persistent volume claims
-              </div>
+              <Resource
+                resourceName="Persistent volume claims"
+                getResourceData={getResourceData}
+              />
             </div>
           )}
           <li
-            className="p-2 w-full rounded-sm hover:bg-creo hover:text-gray-100 cursor-pointer flex items-center justify-between"
+            className="p-2 w-full rounded-md hover:bg-creo hover:text-gray-100 cursor-pointer flex items-center justify-between"
+            onClick={() => {
+              setObservability(!observability);
+            }}
+          >
+            <div className="flex items-center justify-between w-full">
+              <span>Observability</span>
+              <div>
+                {!observability ? (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-6 w-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                ) : (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-6 w-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M5 15l7-7 7 7"
+                    />
+                  </svg>
+                )}
+              </div>
+            </div>
+          </li>
+          {observability && (
+            <div className="ml-8">
+              <Resource resourceName="Logs" getResourceData={getResourceData} />
+              <Resource
+                resourceName="Metrics"
+                getResourceData={getResourceData}
+              />
+              <Resource
+                resourceName="Monitoring"
+                getResourceData={getResourceData}
+              />
+            </div>
+          )}
+
+          <li
+            className="p-2 w-full rounded-md hover:bg-creo hover:text-gray-100 cursor-pointer flex items-center justify-between"
             onClick={() => {
               setHpa(!hpa);
             }}
@@ -327,14 +362,24 @@ export default function App() {
           </li>
           {hpa && (
             <div className="ml-8">
-              <div
-                className="hover:bg-creo p-1 cursor-pointer hover:text-gray-100 rounded-sm"
-                onClick={() => getResourceData("horizontalpodautoscalers")}
-              >
-                Horizontal pod autoscalers
-              </div>
+              <Resource
+                resourceName="Horizontal pod autoscalers"
+                getResourceData={getResourceData}
+              />
             </div>
           )}
+          <div className="ml-1">
+            <Resource
+              resourceName="App store"
+              getResourceData={getResourceData}
+            />
+          </div>
+          <div className="ml-1 mt-1">
+            <Resource
+              resourceName="Billing"
+              getResourceData={getResourceData}
+            />
+          </div>
         </ul>
       </div>
       <div className="lg:w-5/6 md:w-4/5 xs:w-3/4 w-full">
