@@ -19,6 +19,7 @@ const data = new Map([
     ['Monitoring', 'monitoring'],
     ['App store', 'appstore'],
     ['Billing', 'billing'],
+    ["Custom resources", 'customresources'],
 ]);
 
 export const Resource = ({ resourceName, getResourceData }) => {

@@ -17,6 +17,7 @@ export default function App() {
   const [network, setNetwork] = useState(false);
   const [storage, setStorage] = useState(false);
   const [hpa, setHpa] = useState(false);
+  const [customResource, setCustomResource] = useState(false);
   const [observability, setObservability] = useState(false);
   const getResourceData = async (rs) => {
     setLoading(true);
@@ -257,6 +258,55 @@ export default function App() {
             <div className="ml-8">
               <Resource
                 resourceName="Persistent volume claims"
+                getResourceData={getResourceData}
+              />
+            </div>
+          )}
+          <li
+            className="p-2 w-full rounded-md hover:bg-creo hover:text-gray-100 cursor-pointer flex items-center justify-between"
+            onClick={() => setCustomResource(!customResource)}
+          >
+            <div className="flex items-center justify-between w-full">
+              <span>Custom Resources</span>
+              <div>
+                {!customResource ? (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-6 w-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                ) : (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-6 w-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M5 15l7-7 7 7"
+                    />
+                  </svg>
+                )}
+              </div>
+            </div>
+          </li>
+          {customResource && (
+            <div className="ml-8">
+              <Resource
+                resourceName="Custom resources"
                 getResourceData={getResourceData}
               />
             </div>
