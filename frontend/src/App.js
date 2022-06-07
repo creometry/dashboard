@@ -3,10 +3,11 @@ import axios from "axios";
 import loadingSpinner from "../src/loading.gif";
 import creometryLogo from "../src/creo.png";
 import { Resource } from "./components/Resource";
+import { Table } from "./components/Table";
 
 export default function App() {
-  const { REACT_APP_URL } = process.env;
-  const NAMESPACE = "colibris";
+  const { REACT_APP_URL, REACT_APP_NAMESPACE } = process.env;
+  const NAMESPACE = REACT_APP_NAMESPACE;
   const [loading, setLoading] = useState(false);
   const [err, setError] = useState("");
   const [resource, setResource] = useState("pods");
@@ -24,7 +25,7 @@ export default function App() {
       const resp = await axios.get(
         `${REACT_APP_URL}/api/v1/${rs}/${NAMESPACE}`
       );
-      setData(resp.data);
+      setData(resp.data.data);
       setLoading(false);
     } catch (error) {
       setError(error);
@@ -441,8 +442,10 @@ export default function App() {
             </div>
           ) : err === "" ? (
             <div className="flex flex-col">
-              <div>{resource}</div>
-              <div>{JSON.stringify(data)}</div>
+              <div className="p-4 text-lg">
+                {resource.charAt(0).toUpperCase() + resource.slice(1)}
+              </div>
+              <Table data={data} resource={resource} />
             </div>
           ) : (
             <div className="text-red-600">{JSON.stringify(err)}</div>

@@ -27,12 +27,12 @@ func main() {
 
 	// add CORS
 	app.Use(cors.New(cors.Config{
-		AllowOrigins: "http://localhost:3001",
+		AllowOrigins: "http://localhost:3000",
 		AllowHeaders:  "Origin, Content-Type, Accept",
 	}))
 
 
 	routes.CreateRoutes(app)
 
-	log.Fatal(app.Listen(":3000"))
+	log.Fatal(app.Listen(":3001"))
 }

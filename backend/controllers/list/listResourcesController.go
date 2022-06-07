@@ -29,7 +29,7 @@ func GetAllPods(c *fiber.Ctx) error {
 		})
 	}
 	return c.JSON(fiber.Map{
-		"pods": pods,
+		"data": pods,
 	})
 }
 
@@ -43,7 +43,7 @@ func GetPod(c *fiber.Ctx) error {
 		})
 	}
 	return c.JSON(fiber.Map{
-		"pod": pod,
+		"data": pod,
 	})
 }
 
@@ -56,7 +56,7 @@ func GetAllServices(c *fiber.Ctx) error {
 		})
 	}
 	return c.JSON(fiber.Map{
-		"services": services,
+		"data": services,
 	})
 }
 
@@ -70,7 +70,7 @@ func GetService(c *fiber.Ctx) error {
 		})
 	}
 	return c.JSON(fiber.Map{
-		"service": service,
+		"data": service,
 	})
 }
 
@@ -83,7 +83,7 @@ func GetAllDeployments(c *fiber.Ctx) error {
 		})
 	}
 	return c.JSON(fiber.Map{
-		"deployments": deployments,
+		"data": deployments,
 	})
 }
 
@@ -97,7 +97,7 @@ func GetDeployment(c *fiber.Ctx) error {
 		})
 	}
 	return c.JSON(fiber.Map{
-		"deployment": deployment,
+		"data": deployment,
 	})
 }
 
@@ -110,7 +110,7 @@ func GetAllConfigMaps(c *fiber.Ctx) error {
 		})
 	}
 	return c.JSON(fiber.Map{
-		"configmaps": configMaps,
+		"data": configMaps,
 	})
 }
 
@@ -124,7 +124,7 @@ func GetConfigMap(c *fiber.Ctx) error {
 		})
 	}
 	return c.JSON(fiber.Map{
-		"configmap": configMap,
+		"data": configMap,
 	})
 }
 
@@ -137,7 +137,7 @@ func GetAllSecrets(c *fiber.Ctx) error {
 		})
 	}
 	return c.JSON(fiber.Map{
-		"secrets": secrets,
+		"data": secrets,
 	})
 }
 
@@ -151,7 +151,7 @@ func GetSecret(c *fiber.Ctx) error {
 		})
 	}
 	return c.JSON(fiber.Map{
-		"secret": secret,
+		"data": secret,
 	})
 }
 
@@ -164,7 +164,7 @@ func GetAllPersistentVolumeClaims(c *fiber.Ctx) error {
 		})
 	}
 	return c.JSON(fiber.Map{
-		"pvc": pvc,
+		"data": pvc,
 	})
 }
 
@@ -178,7 +178,7 @@ func GetPersistentVolumeClaim(c *fiber.Ctx) error {
 		})
 	}
 	return c.JSON(fiber.Map{
-		"pvc": pvc,
+		"data": pvc,
 	})
 }
 
@@ -191,7 +191,7 @@ func GetAllStatefulSets(c *fiber.Ctx) error {
 		})
 	}
 	return c.JSON(fiber.Map{
-		"statefulsets": statefulSets,
+		"data": statefulSets,
 	})
 }
 
@@ -205,7 +205,7 @@ func GetStatefulSet(c *fiber.Ctx) error {
 		})
 	}
 	return c.JSON(fiber.Map{
-		"statefulset": statefulSet,
+		"data": statefulSet,
 	})
 }
 
@@ -218,7 +218,7 @@ func GetAllJobs(c *fiber.Ctx) error {
 		})
 	}
 	return c.JSON(fiber.Map{
-		"jobs": jobs,
+		"data": jobs,
 	})
 }
 
@@ -232,7 +232,7 @@ func GetJob(c *fiber.Ctx) error {
 		})
 	}
 	return c.JSON(fiber.Map{
-		"job": job,
+		"data": job,
 	})
 }
 
@@ -245,7 +245,7 @@ func GetAllCronJobs(c *fiber.Ctx) error {
 		})
 	}
 	return c.JSON(fiber.Map{
-		"cronjobs": cronJobs,
+		"data": cronJobs,
 	})
 }
 
@@ -259,7 +259,7 @@ func GetCronJob(c *fiber.Ctx) error {
 		})
 	}
 	return c.JSON(fiber.Map{
-		"cronjob": cronJob,
+		"data": cronJob,
 	})
 }
 
@@ -272,7 +272,7 @@ func GetAllEndpoints(c *fiber.Ctx) error {
 		})
 	}
 	return c.JSON(fiber.Map{
-		"endpoints": endpoints,
+		"data": endpoints,
 	})
 }
 
@@ -286,7 +286,7 @@ func GetEndpoint(c *fiber.Ctx) error {
 		})
 	}
 	return c.JSON(fiber.Map{
-		"endpoint": endpoint,
+		"data": endpoint,
 	})
 }
 
@@ -299,7 +299,7 @@ func GetAllIngresses(c *fiber.Ctx) error {
 		})
 	}
 	return c.JSON(fiber.Map{
-		"ingresses": ingresses,
+		"data": ingresses,
 	})
 }
 
@@ -313,7 +313,7 @@ func GetIngress(c *fiber.Ctx) error {
 		})
 	}
 	return c.JSON(fiber.Map{
-		"ingress": ingress,
+		"data": ingress,
 	})
 }
 
@@ -326,7 +326,7 @@ func GetAllEvents(c *fiber.Ctx) error {
 		})
 	}
 	return c.JSON(fiber.Map{
-		"events": events,
+		"data": events,
 	})
 }
 
@@ -339,7 +339,7 @@ func GetAllHorizontalPodAutoscalers(c *fiber.Ctx) error {
 		})
 	}
 	return c.JSON(fiber.Map{
-		"horizontalpodautoscalers": horizontalPodAutoscalers,
+		"data": horizontalPodAutoscalers,
 	})
 }
 
@@ -353,7 +353,7 @@ func GetHorizontalPodAutoscaler(c *fiber.Ctx) error {
 		})
 	}
 	return c.JSON(fiber.Map{
-		"horizontalpodautoscaler": horizontalPodAutoscaler,
+		"data": horizontalPodAutoscaler,
 	})
 }
 
@@ -366,7 +366,7 @@ func GetAllCustomResources(c *fiber.Ctx) error {
 		})
 	}
 	return c.JSON(fiber.Map{
-		"customresources": customResources,
+		"data": customResources,
 	})
 }
 
@@ -380,6 +380,6 @@ func GetCustomResource(c *fiber.Ctx) error {
 		})
 	}
 	return c.JSON(fiber.Map{
-		"customresource": customResource,
+		"data": customResource,
 	})
 }
