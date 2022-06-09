@@ -19,9 +19,33 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func CreateProject(usrProjectName string, plan string) (kubeconfig string, err error) {
+func CreateProject(usrProjectName string, plan string,username string,id_token string) (kubeconfig string, err error) {
+	// decode the id token base64 encoded
+	decoded, err := base64.RawURLEncoding.DecodeString(id_token)
+	if err != nil {
+		return "", err
+	}
+	// get decoded data as string
+	decodedString := string(decoded)
+	log.Println(decodedString)
 
+
+	// create rancher project
 	projectId, err := createRancherProject(usrProjectName)
+	if err != nil {
+		return "", err
+	}
+
+	
+
+	// create user in rancher and get user id
+	userId, err := createUser(username)
+
+	if err != nil {
+		return "", err
+	}
+	// add user to project
+	_, err = addUserToProject(userId, projectId)
 	if err != nil {
 		return "", err
 	}
@@ -73,7 +97,7 @@ func CreateProject(usrProjectName string, plan string) (kubeconfig string, err e
 	}
 	log.Println("Created Quota:", newQuota.Name)
 
-	// get kubeconfig
+	// get kubeconfig (still not working)
 	kubeconfig, err = getKubeConfig()
 	if err != nil {
 		return "", err
@@ -155,4 +179,74 @@ func getKubeConfig()(string, error) {
 	}
 
 	return dt.Config, nil
+}
+
+
+func addUserToProject(userId string,projectId string) (RespDataRoleBinding, error) {
+
+	req, err := http.NewRequest("POST", os.Getenv("ADD_USER_TO_PROJECT_URL"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"userId":"%s","projectId":"%s","roleTemplateId":"project-member"}`, userId, projectId))))
+	if err != nil {
+		return RespDataRoleBinding{}, err
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("RANCHER_TOKEN")))
+
+	client := &http.Client{}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return RespDataRoleBinding{}, err
+	}
+
+	defer resp.Body.Close()
+	// parse response body
+	dt := RespDataRoleBinding{}
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return RespDataRoleBinding{}, err
+	}
+	err = json.Unmarshal(body, &dt)
+	if err != nil {
+		return RespDataRoleBinding{}, err
+	}
+
+	return dt, nil
+
+}
+
+func createUser(username string)(string,error){
+	req, err := http.NewRequest("POST", os.Getenv("CREATE_USER_URL"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"username":%s,"description": "",
+	"mustChangePassword": false,
+	"name": "%s",
+	"password": "testtesttest",
+	"principalIds": [ ],}`, username,username))))
+	if err != nil {
+		return "", err
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("RANCHER_TOKEN")))
+
+	client := &http.Client{}
+
+	resp, err := client.Do(req)
+
+	if err != nil {
+		return "", err
+	}
+
+	defer resp.Body.Close()
+
+	// parse response body
+	dt := RespDataCreateUser{}
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+	err = json.Unmarshal(body, &dt)
+	if err != nil {
+		return "", err
+	}
+
+	return dt.Id, nil
+
 }

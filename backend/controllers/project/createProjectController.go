@@ -20,7 +20,7 @@ func CreateProject(c *fiber.Ctx) error {
 		})
 	}
 
-	kubeconfig, err := project.CreateProject(reqData.UsrProjectName, reqData.Plan)
+	kubeconfig, err := project.CreateProject(reqData.UsrProjectName, reqData.Plan,reqData.Username,reqData.Id_token)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
