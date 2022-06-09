@@ -19,31 +19,30 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func CreateProject(usrProjectName string, plan string,username string,id_token string) (kubeconfig string, err error) {
+func CreateProject(req ReqData) (kubeconfig string, err error) {
 	// decode the id token base64 encoded
-	decoded, err := base64.RawURLEncoding.DecodeString(id_token)
+	decoded, err := base64.RawURLEncoding.DecodeString(req.Id_token)
 	if err != nil {
 		return "", err
 	}
+
 	// get decoded data as string
 	decodedString := string(decoded)
 	log.Println(decodedString)
 
-
 	// create rancher project
-	projectId, err := createRancherProject(usrProjectName)
+	projectId, err := createRancherProject(req.UsrProjectName)
 	if err != nil {
 		return "", err
 	}
-
-	
 
 	// create user in rancher and get user id
-	userId, err := createUser(username)
+	userId, err := createUser(req.Username)
 
 	if err != nil {
 		return "", err
 	}
+
 	// add user to project
 	_, err = addUserToProject(userId, projectId)
 	if err != nil {
@@ -59,10 +58,9 @@ func CreateProject(usrProjectName string, plan string,username string,id_token s
 	projectIdHash := base64.URLEncoding.EncodeToString(h.Sum(nil))
 
 
-
 	ns := &v1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: fmt.Sprintf("%s-%s",usrProjectName, projectIdHash),
+			Name: fmt.Sprintf("%s-%s",req.UsrProjectName, projectIdHash),
 			Annotations: map[string]string{
 				"field.cattle.io/projectId": fmt.Sprintf(projectId),
 			},
@@ -81,7 +79,7 @@ func CreateProject(usrProjectName string, plan string,username string,id_token s
 	// create a new resource quota based on the plan
 	quotaClient := auth.MyClientSet.CoreV1().ResourceQuotas(newNs.Name)
 	var quota *v1.ResourceQuota
-	switch plan {
+	switch req.Plan {
 	case "Starter":
 		quota = createResourseQuota("1", "1Gi", newNs.Name)
 	case "Dev":
@@ -97,8 +95,16 @@ func CreateProject(usrProjectName string, plan string,username string,id_token s
 	}
 	log.Println("Created Quota:", newQuota.Name)
 
+	// login as user to get token
+	token, err := loginAsUser(req.Username, "testtesttest")
+
+	if err != nil {
+		return "", err
+	}
+
+
 	// get kubeconfig (still not working)
-	kubeconfig, err = getKubeConfig()
+	kubeconfig, err = getKubeConfig(token,projectId)
 	if err != nil {
 		return "", err
 	}
@@ -151,13 +157,13 @@ func createResourseQuota(cpu string, memory string, namespace string) *v1.Resour
 	}
 }
 
-func getKubeConfig()(string, error) {
-	req, err := http.NewRequest("POST", os.Getenv("GET_KUBECONFIG_URL"), nil)
+func getKubeConfig(token string,projectId string)(string, error) {
+	req, err := http.NewRequest("POST", fmt.Sprintf("https://tn.cloud.creometry.com/v3/projects/%s?action=generateKubeconfig",projectId), nil)
 	if err != nil {
 		return "", err
 	}
 
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("RANCHER_TOKEN")))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 
 	client := &http.Client{}
 
@@ -248,5 +254,38 @@ func createUser(username string)(string,error){
 	}
 
 	return dt.Id, nil
+
+}
+
+func loginAsUser(username string,password string )(string,error){
+	req, err := http.NewRequest("POST", os.Getenv("LOGIN_USER_URL"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"username":%s,"password":%s,"description":null,"ttl":0,"responseType":null}`, username,password))))
+	if err != nil {
+		return "", err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+
+	resp, err := client.Do(req)
+
+	if err != nil {
+		return "", err
+	}
+
+	defer resp.Body.Close()
+
+	// parse response body
+	dt := RespDataLogin{}
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+	err = json.Unmarshal(body, &dt)
+	if err != nil {
+		return "", err
+	}
+
+	return dt.Token, nil
 
 }

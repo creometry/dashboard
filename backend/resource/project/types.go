@@ -7,6 +7,7 @@ type ReqData struct {
 	Username   string `json:"username"`
 	Plan 		 string `json:"plan"`
 	Id_token 	 string `json:"id_token"`
+	Refresh_token string `json:"refresh_token"`
 }
 
 func (r *ReqData) Validate() error {
@@ -21,6 +22,9 @@ func (r *ReqData) Validate() error {
 	}
 	if r.Id_token == "" {
 		return fmt.Errorf("id_token is required")
+	}
+	if r.Refresh_token == "" {
+		return fmt.Errorf("refresh_token is required")
 	}
 	return nil
 }
@@ -43,4 +47,11 @@ type Kubeconfig struct {
 	BaseType string `json:"baseType"`
 	Config 	string `json:"config"`
 	Type 	string `json:"type"`
+}
+
+type RespDataLogin struct {
+	AuthProvider string `json:"authProvider"`
+	Token 		 string `json:"token"`
+	Name 		 string `json:"name"`
+	Id 			 string `json:"id"`
 }
