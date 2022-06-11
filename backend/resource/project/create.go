@@ -52,15 +52,19 @@ func CreateProject(req ReqData) (kubeconfig string, err error) {
 	// create a new namespace with annotation "projectId"
 	nsClient := auth.MyClientSet.CoreV1().Namespaces()
 
-	// hash the projectId using golang's sha256
+	// create a random hash and append it to the namespace name
 	h := sha1.New()
-	h.Write([]byte(projectId))
-	projectIdHash := base64.URLEncoding.EncodeToString(h.Sum(nil))
+	h.Write([]byte(time.Now().String()))
+	b := h.Sum(nil)
+	rand := base64.URLEncoding.EncodeToString(b)
+
+	nsName := req.Namespace + "-" + rand
+
 
 
 	ns := &v1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: fmt.Sprintf("%s-%s",req.UsrProjectName, projectIdHash),
+			Name: 	nsName,
 			Annotations: map[string]string{
 				"field.cattle.io/projectId": fmt.Sprintf(projectId),
 			},
