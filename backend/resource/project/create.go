@@ -61,8 +61,9 @@ func CreateProject(req ReqData) (kubeconfig string, err error) {
 	h.Write([]byte(time.Now().String()))
 	b := h.Sum(nil)
 	rand := base64.URLEncoding.EncodeToString(b)
-
-	nsName := req.Namespace + "-" + rand
+	// delete every special character in the random hash
+	rand = strings.Replace(rand, "=", "", -1)
+	nsName := req.Namespace + "-" + strings.ToLower(rand+"x")
 
 
 	ns := &v1.Namespace{
@@ -222,7 +223,6 @@ func addUserToProject(userId string,principalIds []string,projectId string) (Res
 	if err != nil {
 		return RespDataRoleBinding{}, err
 	}
-
 	return dt, nil
 
 }
