@@ -45,6 +45,7 @@ type RespDataRoleBinding struct {
 
 type RespDataCreateUser	struct {
 	Id string `json:"id"`
+	PrincipalIds []string `json:"principalIds"`
 }
 
 type Kubeconfig struct {

@@ -3,8 +3,11 @@ package project
 import (
 	"bytes"
 	"context"
+	_ "context"
 	"crypto/sha1"
+	_ "crypto/sha1"
 	"encoding/base64"
+	_ "encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -12,23 +15,20 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	_ "strings"
+	"time"
+	_ "time"
 
 	"github.com/Creometry/dashboard/auth"
+	_ "github.com/Creometry/dashboard/auth"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func CreateProject(req ReqData) (kubeconfig string, err error) {
-	// decode the id token base64 encoded
-	decoded, err := base64.RawURLEncoding.DecodeString(req.Id_token)
-	if err != nil {
-		return "", err
-	}
-
-	// get decoded data as string
-	decodedString := string(decoded)
-	log.Println(decodedString)
+	// decode the id_token (JWT)
+	
 
 	// create rancher project
 	projectId, err := createRancherProject(req.UsrProjectName)
@@ -37,14 +37,18 @@ func CreateProject(req ReqData) (kubeconfig string, err error) {
 	}
 
 	// create user in rancher and get user id
-	userId, err := createUser(req.Username)
+	userId,principalIds, err := createUser(req.Username)
 
 	if err != nil {
 		return "", err
 	}
 
+	if len(principalIds) == 0 {
+		return "", fmt.Errorf("User already exists")
+	}
+
 	// add user to project
-	_, err = addUserToProject(userId, projectId)
+	_, err = addUserToProject(userId, principalIds,projectId)
 	if err != nil {
 		return "", err
 	}
@@ -59,7 +63,6 @@ func CreateProject(req ReqData) (kubeconfig string, err error) {
 	rand := base64.URLEncoding.EncodeToString(b)
 
 	nsName := req.Namespace + "-" + rand
-
 
 
 	ns := &v1.Namespace{
@@ -108,11 +111,11 @@ func CreateProject(req ReqData) (kubeconfig string, err error) {
 
 
 	// get kubeconfig (still not working)
-	kubeconfig, err = getKubeConfig(req.Id_token,projectId)
+	/*kubeconfig, err = getKubeConfig(req.Id_token,projectId)
 	if err != nil {
 		return "", err
-	}
-	return kubeconfig, nil
+	}*/
+	return "kubeconfig", nil
 
 }
 
@@ -192,9 +195,9 @@ func getKubeConfig(token string,projectId string)(string, error) {
 }
 
 
-func addUserToProject(userId string,projectId string) (RespDataRoleBinding, error) {
+func addUserToProject(userId string,principalIds []string,projectId string) (RespDataRoleBinding, error) {
 
-	req, err := http.NewRequest("POST", os.Getenv("ADD_USER_TO_PROJECT_URL"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"userId":"%s","projectId":"%s","roleTemplateId":"project-member"}`, userId, projectId))))
+	req, err := http.NewRequest("POST", os.Getenv("ADD_USER_TO_PROJECT_URL"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"userId":"%s/%s","projectId":"%s","roleTemplateId":"project-member"}`, userId, principalIds[0],projectId))))
 	if err != nil {
 		return RespDataRoleBinding{}, err
 	}
@@ -210,7 +213,7 @@ func addUserToProject(userId string,projectId string) (RespDataRoleBinding, erro
 
 	defer resp.Body.Close()
 	// parse response body
-	dt := RespDataRoleBinding{}
+	dt:= RespDataRoleBinding{}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return RespDataRoleBinding{}, err
@@ -224,14 +227,10 @@ func addUserToProject(userId string,projectId string) (RespDataRoleBinding, erro
 
 }
 
-func createUser(username string)(string,error){
-	req, err := http.NewRequest("POST", os.Getenv("CREATE_USER_URL"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"username":%s,"description": "",
-	"mustChangePassword": false,
-	"name": "%s",
-	"password": "testtesttest",
-	"principalIds": [ ],}`, username,username))))
+func createUser(username string)(string,[]string,error){
+	req, err := http.NewRequest("POST", os.Getenv("CREATE_USER_URL"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"username":"%s","mustChangePassword": false,"password": "testtesttest","principalIds": [ ]}`, username))))
 	if err != nil {
-		return "", err
+		return "",[]string{}, err
 	}
 
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("RANCHER_TOKEN")))
@@ -241,23 +240,23 @@ func createUser(username string)(string,error){
 	resp, err := client.Do(req)
 
 	if err != nil {
-		return "", err
+		return "",[]string{}, err
 	}
-
+	
 	defer resp.Body.Close()
-
+	
 	// parse response body
-	dt := RespDataCreateUser{}
+	dt:=RespDataCreateUser{}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
+		return "", []string{},err
 	}
 	err = json.Unmarshal(body, &dt)
 	if err != nil {
-		return "", err
+		return "", []string{},err
 	}
 
-	return dt.Id, nil
+	return dt.Id,dt.PrincipalIds, nil
 
 }
 
