@@ -96,15 +96,15 @@ func CreateProject(req ReqData) (kubeconfig string, err error) {
 	log.Println("Created Quota:", newQuota.Name)
 
 	// login as user to get token
-	token, err := loginAsUser(req.Username, "testtesttest")
+	/* token, err := loginAsUser(req.Username, "testtesttest")
 
 	if err != nil {
 		return "", err
-	}
+	} */
 
 
 	// get kubeconfig (still not working)
-	kubeconfig, err = getKubeConfig(token,projectId)
+	kubeconfig, err = getKubeConfig(req.Id_token,projectId)
 	if err != nil {
 		return "", err
 	}
