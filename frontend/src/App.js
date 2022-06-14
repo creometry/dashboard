@@ -14,10 +14,23 @@ import { ServiceList } from "./components/resources/ServiceList";
 import { EndpointList } from "./components/resources/EndpointList";
 import { EventList } from "./components/resources/EventList";
 import { NotFound } from "./components/NotFound";
+import { PaymentError } from "./components/PaymentError";
+import { GithubAuth } from "./components/GithubAuth";
+import { Plan } from "./components/plans/Plan";
+import { Starter } from "./components/plans/Starter";
+import { Dev } from "./components/plans/Dev";
+import { Pro } from "./components/plans/Pro";
+
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/plans" element={<Plan />} />
+        <Route path="/plans/starter" element={<Starter />} />
+        <Route path="/plans/dev" element={<Dev />} />
+        <Route path="/plans/pro" element={<Pro />} />
+        <Route path="/paymenterror" element={<PaymentError />} />
+        <Route path="/success" element={<GithubAuth />} />
         <Route
           path="/"
           element={
