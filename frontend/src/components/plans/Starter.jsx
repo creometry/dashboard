@@ -2,12 +2,20 @@ import React from 'react'
 import { useNavigate } from 'react-router-dom'
 
 export const Starter = () => {
-    const { REACT_APP_VENDOR, REACT_APP_TOKEN, REACT_APP_SUCCESS_URL, REACT_APP_ERROR_URL } = process.env
+    const {
+        REACT_APP_VENDOR,
+        REACT_APP_TOKEN,
+        REACT_APP_SUCCESS_URL,
+        REACT_APP_ERROR_URL,
+        REACT_APP_CREATE_PAYMENT_URL,
+        REACT_APP_CREATE_PAYMENT_GATEWAY
+    } = process.env
     const navigate = useNavigate()
     const payPlan = async () => {
+        localStorage.setItem('plan', 'Starter')
         let amount = 49
         const resp = await fetch(
-            "https://sandbox.paymee.tn/api/v1/payments/create",
+            REACT_APP_CREATE_PAYMENT_URL,
             {
                 method: "POST",
                 body: JSON.stringify({ vendor: REACT_APP_VENDOR, amount: amount, note: "test" }),
@@ -28,7 +36,7 @@ export const Starter = () => {
 
         // submit a form with the token as a hidden field
         const form = document.createElement("form");
-        form.action = "https://sandbox.paymee.tn/gateway/";
+        form.action = REACT_APP_CREATE_PAYMENT_GATEWAY;
         form.method = "POST";
         form.innerHTML = `<input type="hidden" name="payment_token" value="${token}">`;
         form.innerHTML += `<input type="hidden" name="url_ok" value="${REACT_APP_SUCCESS_URL}">`;
@@ -36,6 +44,7 @@ export const Starter = () => {
 
         document.body.appendChild(form);
         form.submit();
+
 
     }
     return (

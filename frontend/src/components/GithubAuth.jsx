@@ -10,6 +10,7 @@ export const GithubAuth = () => {
     useEffect(() => {
         const token = searchParams.get('payment_token')
         if (!token) {
+            localStorage.removeItem('user_data')
             navigate('/plans')
             return
         }
@@ -23,13 +24,21 @@ export const GithubAuth = () => {
                 })
 
                 if (resp.data.message !== "Success") {
+                    localStorage.removeItem('user_data')
                     navigate('/paymenterror')
                     return
                 }
 
+                const userData = {
+                    plan: localStorage.getItem('plan'),
+                }
+
+                localStorage.setItem('user_data', JSON.stringify(userData))
+
                 setLoading(false)
 
             } catch (err) {
+                localStorage.removeItem('user_data')
                 navigate('/paymenterror')
                 return
             }
@@ -37,6 +46,7 @@ export const GithubAuth = () => {
 
         }
         checkPayment()
+        // eslint-disable-next-line
     }, [])
     return (
         <div className='flex flex-col justify-center items-center h-screen'>
