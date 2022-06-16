@@ -14,36 +14,41 @@ export const Dev = () => {
     const payPlan = async () => {
         localStorage.setItem('plan', 'Dev')
         let amount = 99
-        const resp = await fetch(
-            REACT_APP_CREATE_PAYMENT_URL,
-            {
-                method: "POST",
-                body: JSON.stringify({ vendor: REACT_APP_VENDOR, amount: amount, note: "test" }),
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Token ${REACT_APP_TOKEN}`,
-                },
-            }
-        );
-        // get the response as json
-        const data = await resp.json();
+        try {
+            const resp = await fetch(
+                REACT_APP_CREATE_PAYMENT_URL,
+                {
+                    method: "POST",
+                    body: JSON.stringify({ vendor: REACT_APP_VENDOR, amount: amount, note: "test" }),
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Token ${REACT_APP_TOKEN}`,
+                    },
+                }
+            );
+            // get the response as json
+            const data = await resp.json();
 
-        if (data.message !== "Success") {
+            if (data.message !== "Success") {
+                navigate('/paymenterror')
+            }
+
+            const token = data.data.token;
+
+            // submit a form with the token as a hidden field
+            const form = document.createElement("form");
+            form.action = REACT_APP_CREATE_PAYMENT_GATEWAY;
+            form.method = "POST";
+            form.innerHTML = `<input type="hidden" name="payment_token" value="${token}">`;
+            form.innerHTML += `<input type="hidden" name="url_ok" value="${REACT_APP_SUCCESS_URL}">`;
+            form.innerHTML += `<input type="hidden" name="url_ko" value="${REACT_APP_ERROR_URL}">`;
+
+            document.body.appendChild(form);
+            form.submit();
+        } catch (err) {
+            console.log(err)
             navigate('/paymenterror')
         }
-
-        const token = data.data.token;
-
-        // submit a form with the token as a hidden field
-        const form = document.createElement("form");
-        form.action = REACT_APP_CREATE_PAYMENT_GATEWAY;
-        form.method = "POST";
-        form.innerHTML = `<input type="hidden" name="payment_token" value="${token}">`;
-        form.innerHTML += `<input type="hidden" name="url_ok" value="${REACT_APP_SUCCESS_URL}">`;
-        form.innerHTML += `<input type="hidden" name="url_ko" value="${REACT_APP_ERROR_URL}">`;
-
-        document.body.appendChild(form);
-        form.submit();
 
 
     }
