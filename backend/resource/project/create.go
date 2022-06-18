@@ -31,7 +31,7 @@ func CreateProject(req ReqData) (kubeconfig string, err error) {
 	
 
 	// create rancher project
-	projectId, err := createRancherProject(req.UsrProjectName)
+	projectId, err := createRancherProject(req.UsrProjectName,req.Plan)
 	if err != nil {
 		return "", err
 	}
@@ -84,24 +84,6 @@ func CreateProject(req ReqData) (kubeconfig string, err error) {
 	}
 	log.Println("Created Namespace:", newNs.Name)
 
-	// create a new resource quota based on the plan
-	quotaClient := auth.MyClientSet.CoreV1().ResourceQuotas(newNs.Name)
-	var quota *v1.ResourceQuota
-	switch req.Plan {
-	case "Starter":
-		quota = createResourseQuota("1", "1Gi", newNs.Name)
-	case "Dev":
-		quota = createResourseQuota("2", "2Gi", newNs.Name)
-	case "Pro":
-		quota = createResourseQuota("4", "4Gi", newNs.Name)
-	}
-
-	newQuota, err := quotaClient.Create(context.TODO(), quota, metav1.CreateOptions{})
-
-	if err != nil {
-		return "", err
-	}
-	log.Println("Created Quota:", newQuota.Name)
 
 	// login as user to get token
 	/* token, err := loginAsUser(req.Username, "testtesttest")
@@ -120,8 +102,12 @@ func CreateProject(req ReqData) (kubeconfig string, err error) {
 
 }
 
-func createRancherProject(usrProjectName string) (string, error) {
-	req, err := http.NewRequest("POST", os.Getenv("CREATE_PROJECT_URL"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"name":"%s","clusterId":"%s"}`, usrProjectName, os.Getenv("CLUSTER_ID")))))
+func createRancherProject(usrProjectName string,plan string) (string, error) {
+	resourceQuota:= genResourceQuotaFromPlan(plan)
+	if resourceQuota == "nil" {
+		return "", fmt.Errorf("Invalid plan")
+	}
+	req, err := http.NewRequest("POST", os.Getenv("CREATE_PROJECT_URL"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"name":"%s","clusterId":"%s",%s}`, usrProjectName, os.Getenv("CLUSTER_ID"),resourceQuota))))
 	if err != nil {
 		return "", err
 	}
@@ -163,6 +149,111 @@ func createResourseQuota(cpu string, memory string, namespace string) *v1.Resour
 			},
 		},
 	}
+}
+
+func genResourceQuotaFromPlan(plan string) string {
+	switch plan {
+	case "Starter":
+		return `"namespaceDefaultResourceQuota": {
+			"limit": {
+			"configMaps": "10",
+			"limitsCpu": "1000m",
+			"limitsMemory": "2000Mi",
+			"persistentVolumeClaims": "10",
+			"pods": "50",
+			"replicationControllers": "15",
+			"requestsStorage": "50000Mi",
+			"secrets": "20",
+			"services": "50",
+			"servicesLoadBalancers": "0",
+			"servicesNodePorts": "0"
+			}
+			},
+			"resourceQuota": {
+			"limit": {
+			"configMaps": "10",
+			"limitsCpu": "1000m",
+			"limitsMemory": "2000Mi",
+			"persistentVolumeClaims": "10",
+			"pods": "100",
+			"replicationControllers": "30",
+			"requestsStorage": "50000Mi",
+			"secrets": "20",
+			"services": "50",
+			"servicesLoadBalancers": "0",
+			"servicesNodePorts": "0"
+			},
+			"usedLimit": { }
+			}
+		`
+	case "Pro":
+		return `"namespaceDefaultResourceQuota": {
+			"limit": {
+			"configMaps": "20",
+			"limitsCpu": "2000m",
+			"limitsMemory": "4000Mi",
+			"persistentVolumeClaims": "20",
+			"pods": "100",
+			"replicationControllers": "25",
+			"requestsStorage": "50000Mi",
+			"secrets": "20",
+			"services": "50",
+			"servicesLoadBalancers": "0",
+			"servicesNodePorts": "0"
+			}
+			},
+			"resourceQuota": {
+			"limit": {
+			"configMaps": "20",
+			"limitsCpu": "2000m",
+			"limitsMemory": "4000Mi",
+			"persistentVolumeClaims": "20",
+			"pods": "100",
+			"replicationControllers": "25",
+			"requestsStorage": "50000Mi",
+			"secrets": "20",
+			"services": "50",
+			"servicesLoadBalancers": "0",
+			"servicesNodePorts": "0"
+			},
+			"usedLimit": { }
+			}
+		`
+	case "Elite":
+		return `"namespaceDefaultResourceQuota": {
+			"limit": {
+			"configMaps": "20",
+			"limitsCpu": "4000m",
+			"limitsMemory": "8000Mi",
+			"persistentVolumeClaims": "30",
+			"pods": "200",
+			"replicationControllers": "50",
+			"requestsStorage": "200000Mi",
+			"secrets": "20",
+			"services": "100",
+			"servicesLoadBalancers": "0",
+			"servicesNodePorts": "0"
+			}
+			},
+			"resourceQuota": {
+			"limit": {
+			"configMaps": "20",
+			"limitsCpu": "4000m",
+			"limitsMemory": "8000Mi",
+			"persistentVolumeClaims": "30",
+			"pods": "200",
+			"replicationControllers": "50",
+			"requestsStorage": "200000Mi",
+			"secrets": "20",
+			"services": "100",
+			"servicesLoadBalancers": "0",
+			"servicesNodePorts": "0"
+			},
+			"usedLimit": { }
+			}
+		`
+	}
+	return "nil"
 }
 
 func getKubeConfig(token string,projectId string)(string, error) {
