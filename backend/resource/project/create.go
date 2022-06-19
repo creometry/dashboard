@@ -29,6 +29,12 @@ import (
 func CreateProject(req ReqData) (kubeconfig string, err error) {
 	// decode the id_token (JWT)
 	
+	// create gitRepo
+	repoName,err:= createGitRepo(req.GitRepoName,req.GitRepoUrl,req.GitRepoBranch)
+	if err != nil {
+		return "", err
+	}
+	fmt.Printf("Created repo : %s",repoName)
 
 	// create rancher project
 	projectId, err := createRancherProject(req.UsrProjectName,req.Plan)
@@ -383,3 +389,48 @@ func loginAsUser(username string,password string )(string,error){
 	return dt.Token, nil
 
 }
+
+func createGitRepo(name string,url string,branch string)(string, error){
+	req, err := http.NewRequest("POST", fmt.Sprintf("https://tn.cloud.creometry.com/k8s/clusters/%s/v1/catalog.cattle.io.clusterrepos",os.Getenv("CLUSTER_ID")), bytes.NewBuffer([]byte(fmt.Sprintf(`{
+		"type": "catalog.cattle.io.clusterrepo",
+		"metadata": {
+		  "name": "%s"
+		},
+		"spec": {
+		  "url": "",
+		  "clientSecret": null,
+		  "gitRepo": "%s",
+		  "gitBranch": "%s"
+		}
+	  }`,name,url,branch))))
+
+	if err != nil {
+		return "", err
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("RANCHER_TOKEN")))
+
+	client := &http.Client{}
+
+	resp, err := client.Do(req)
+
+	if err != nil {
+		return "", err
+	}
+	
+	defer resp.Body.Close()
+	
+	// parse response body
+	dt:=RespDataCreateGitRepo{}
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+	err = json.Unmarshal(body, &dt)
+	if err != nil {
+		return "", err
+	}
+
+	return dt.Id, nil
+}
+

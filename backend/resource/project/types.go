@@ -7,8 +7,10 @@ type ReqData struct {
 	Namespace	  string `json:"namespace"`
 	Username   string `json:"username"`
 	Plan 		 string `json:"plan"`
+	GitRepoName string `json:"gitRepoName"`
+	GitRepoBranch string `json:"gitRepoBranch"`
+	GitRepoUrl string `json:"gitRepoUrl"`
 	Id_token 	 string `json:"id_token"`
-	Refresh_token string `json:"refresh_token"`
 }
 
 func (r *ReqData) Validate() error {
@@ -24,11 +26,17 @@ func (r *ReqData) Validate() error {
 	if r.Id_token == "" {
 		return fmt.Errorf("id_token is required")
 	}
-	if r.Refresh_token == "" {
-		return fmt.Errorf("refresh_token is required")
-	}
 	if r.Namespace == "" {
 		return fmt.Errorf("namespace is required")
+	}
+	if r.GitRepoName == "" {
+		return fmt.Errorf("gitRepoName is required")
+	}
+	if r.GitRepoUrl == "" {
+		return fmt.Errorf("gitRepoUrl is required")
+	}
+	if r.GitRepoBranch == "" {
+		r.GitRepoBranch = "master"
 	}
 	return nil
 }
@@ -58,5 +66,9 @@ type RespDataLogin struct {
 	AuthProvider string `json:"authProvider"`
 	Token 		 string `json:"token"`
 	Name 		 string `json:"name"`
+	Id 			 string `json:"id"`
+}
+
+type RespDataCreateGitRepo struct {
 	Id 			 string `json:"id"`
 }
