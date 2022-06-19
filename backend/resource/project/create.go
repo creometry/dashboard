@@ -67,9 +67,18 @@ func CreateProject(req ReqData) (kubeconfig string, err error) {
 	h.Write([]byte(time.Now().String()))
 	b := h.Sum(nil)
 	rand := base64.URLEncoding.EncodeToString(b)
-	// delete every special character in the random hash
-	rand = strings.Replace(rand, "=", "", -1)
-	nsName := req.Namespace + "-" + strings.ToLower(rand+"x")
+	// replace every special character in the random hash with a random letter
+	rand = strings.Replace(rand, "+", "x", -1)
+	rand = strings.Replace(rand, "/", "x", -1)
+	rand = strings.Replace(rand, "=", "x", -1)
+	rand = strings.Replace(rand, ".", "x", -1)
+	rand = strings.Replace(rand, "-", "x", -1)
+	rand = strings.Replace(rand, "_", "x", -1)
+	rand = strings.Replace(rand, "*", "x", -1)
+	rand = strings.Replace(rand, " ", "x", -1)
+	rand = strings.Replace(rand, ",", "x", -1)
+
+	nsName := req.Namespace + "-" + strings.ToLower(rand)
 
 
 	ns := &v1.Namespace{
