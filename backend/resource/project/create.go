@@ -22,7 +22,6 @@ import (
 	"github.com/Creometry/dashboard/auth"
 	_ "github.com/Creometry/dashboard/auth"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -78,7 +77,7 @@ func CreateProject(req ReqData) (kubeconfig string, err error) {
 	rand = strings.Replace(rand, " ", "x", -1)
 	rand = strings.Replace(rand, ",", "x", -1)
 
-	nsName := req.Namespace + "-" + strings.ToLower(rand)
+	nsName := strings.ToLower(req.Namespace) + "-" + strings.ToLower(rand)
 
 
 	ns := &v1.Namespace{
@@ -151,20 +150,6 @@ func createRancherProject(usrProjectName string,plan string) (string, error) {
 	return dt.ProjectId, nil
 }
 
-func createResourseQuota(cpu string, memory string, namespace string) *v1.ResourceQuota {
-	return &v1.ResourceQuota{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-quota", namespace),
-			Namespace: namespace,
-		},
-		Spec: v1.ResourceQuotaSpec{
-			Hard: v1.ResourceList{
-				v1.ResourceLimitsCPU:    resource.MustParse(cpu),
-				v1.ResourceLimitsMemory: resource.MustParse(memory),
-			},
-		},
-	}
-}
 
 func genResourceQuotaFromPlan(plan string) string {
 	switch plan {
