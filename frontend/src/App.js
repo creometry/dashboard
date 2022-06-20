@@ -20,6 +20,7 @@ import { Plan } from "./components/plans/Plan";
 import { Starter } from "./components/plans/Starter";
 import { Dev } from "./components/plans/Dev";
 import { Pro } from "./components/plans/Pro";
+import { Steps } from "./components/Steps";
 
 export default function App() {
   return (
@@ -31,6 +32,7 @@ export default function App() {
         <Route path="/plans/pro" element={<Pro />} />
         <Route path="/paymenterror" element={<PaymentError />} />
         <Route path="/success" element={<GithubAuth />} />
+        <Route path="/steps" element={<Steps />} />
         <Route
           path="/"
           element={

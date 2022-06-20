@@ -10,7 +10,7 @@ type ReqData struct {
 	GitRepoName string `json:"gitRepoName"`
 	GitRepoBranch string `json:"gitRepoBranch"`
 	GitRepoUrl string `json:"gitRepoUrl"`
-	Id_token 	 string `json:"id_token"`
+	Access_token 	 string `json:"access_token"`
 }
 
 func (r *ReqData) Validate() error {
@@ -23,8 +23,8 @@ func (r *ReqData) Validate() error {
 	if r.Username == "" {
 		return fmt.Errorf("username is required")
 	}
-	if r.Id_token == "" {
-		return fmt.Errorf("id_token is required")
+	if r.Access_token == "" {
+		return fmt.Errorf("access_token is required")
 	}
 	if r.Namespace == "" {
 		return fmt.Errorf("namespace is required")

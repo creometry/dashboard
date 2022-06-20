@@ -1,0 +1,165 @@
+import React, { useState, useEffect } from 'react'
+import { useSearchParams, useNavigate } from 'react-router-dom'
+import LoginGithub from 'react-login-github';
+import axios from 'axios';
+import { useCookies } from 'react-cookie';
+
+
+
+export const Steps = () => {
+    const [searchParams] = useSearchParams()
+    const plan = searchParams.get('plan')
+    const [cookies, setCookie] = useCookies(["access_token"]);
+    console.log(cookies.access_token)
+    const navigate = useNavigate()
+    const { REACT_APP_GITHUB_CLIENT_ID, REACT_APP_GITHUB_CLIENT_SECRET } = process.env
+    const [step, setStep] = useState(1)
+    const [projectName, setProjectName] = useState(localStorage.getItem('projectName') || '')
+    const [repoName, setRepoName] = useState(localStorage.getItem('repoName') || '')
+    const [repoUrl, setRepoUrl] = useState(localStorage.getItem('repoUrl') || '')
+    const [repoBranch, setRepoBranch] = useState(localStorage.getItem('repoBranch') || '')
+    const [namespace, setNamespace] = useState(localStorage.getItem('namespace') || '')
+
+    const handleSubmit = (e) => {
+        e.preventDefault()
+        localStorage.setItem('projectName', projectName)
+        localStorage.setItem('repoName', repoName)
+        localStorage.setItem('repoUrl', repoUrl)
+        localStorage.setItem('repoBranch', repoBranch)
+        localStorage.setItem('plan', plan)
+        localStorage.setItem('namespace', namespace)
+        setStep(2)
+    }
+
+    const onSuccess = response => {
+        // extract code from response
+        const code = response.code;
+        console.log("code: ", code)
+        // exchange code for github access_token
+        const exchange = async (code) => {
+            try {
+                const resp = await axios.post(`https://github.com/login/oauth/access_token?client_id=${REACT_APP_GITHUB_CLIENT_ID}&client_secret=${REACT_APP_GITHUB_CLIENT_SECRET}&code=${code}`
+                )
+                console.log(resp)
+                const access_token = resp.data.access_token
+                console.log("access_token: ", access_token)
+                // set access_token in cookie
+                setCookie("access_token", access_token, { path: "/" })
+            } catch (err) {
+                console.log("err : " + err)
+            }
+        }
+
+        exchange(code)
+        // start payment flow based on plan
+        let amount = 0
+        switch (plan) {
+            case 'Starter':
+                amount = 49
+            case 'Pro':
+                amount = 99
+            case 'Elite':
+                amount = 149
+        }
+
+        // redirect to payment page
+
+
+    };
+    const onFailure = response => {
+        alert('Failed to login with GitHub')
+        navigate('/steps?plan=' + plan)
+    };
+
+    useEffect(() => {
+        if ((!plan) || (plan !== "Starter" && plan !== "Pro" && plan !== "Elite")) {
+            const code = searchParams.get('code')
+            if (code) { console.log("closing...") }
+            else {
+                alert('Invalid plan, redirecting to starter plan')
+                navigate('/steps?plan=Starter')
+                localStorage.clear()
+            }
+        }
+    }, [])
+
+    return (
+        <div
+            className='flex flex-col justify-center items-center h-screen bg-gray-100'
+        >
+            {step === 1 && <div className='flex flex-col items-center'>
+
+                <div className='text-2xl font-bold text-gray-700'>
+                    Fill this form to continue
+                </div>
+                <form className="bg-white shadow-md rounded-lg px-8 pt-6 pb-8  mt-4 flex flex-col items-center w-96" onSubmit={handleSubmit}>
+                    <div className="mb-4 w-full">
+                        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="projectName">
+                            Project Name
+                        </label>
+                        <input className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:border-creo
+                    " id="projectName" type="text" placeholder="Project Name" required
+                            value={projectName}
+                            onChange={(e) => setProjectName(e.target.value)}
+                        />
+                    </div>
+                    <div className="mb-4 w-full">
+                        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="namespace">
+                            Namespace
+                        </label>
+                        <input className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:border-creo
+                    " id="namespace" type="text" placeholder="Namespace" required
+                            value={namespace}
+                            onChange={(e) => setNamespace(e.target.value)}
+                        />
+                    </div>
+                    <div className="mb-4 w-full">
+                        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="RepositoryName">
+                            Repository Name
+                        </label>
+                        <input className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:border-creo" id="RepositoryName" type="text" placeholder="Repository Name" required
+                            value={repoName}
+                            onChange={(e) => setRepoName(e.target.value)}
+                        />
+                    </div>
+                    <div className="mb-2 w-full">
+                        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="RepositoryURL">
+                            Repository URL
+                        </label>
+                        <input className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline focus:border-creo" id="RepositoryURL" type="text" placeholder="Repository URL" required
+                            value={repoUrl}
+                            onChange={(e) => setRepoUrl(e.target.value)}
+                        />
+                    </div>
+
+                    <div className="mb-4 w-full">
+                        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="Branch">
+                            Branch
+                        </label>
+                        <input className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline focus:border-creo" id="Branch" type="text" placeholder="Branch" required
+                            value={repoBranch}
+                            onChange={(e) => setRepoBranch(e.target.value)}
+                        />
+                    </div>
+
+                    <button type="submit" className='py-2 px-6 border rounded-md bg-creo text-white'>Next</button>
+
+                </form>
+            </div>}
+            {step === 2 &&
+
+                <LoginGithub
+                    clientId={REACT_APP_GITHUB_CLIENT_ID}
+                    redirectUri="http://localhost:3000/steps"
+                    onSuccess={onSuccess}
+                    onFailure={onFailure}
+                    className="flex items-center bg-gray-900 rounded-md py-3 px-2 cursor-pointer hover:bg-gray-700 text-gray-100"
+                    buttonText="Login with GitHub"
+                    scopes="user,public_repo"
+                />
+
+            }
+
+        </div>
+    )
+}
