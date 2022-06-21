@@ -1,6 +1,7 @@
 package routes
 
 import (
+	gh "github.com/Creometry/dashboard/controllers/github"
 	controllers "github.com/Creometry/dashboard/controllers/list"
 	pr "github.com/Creometry/dashboard/controllers/project"
 
@@ -10,6 +11,7 @@ import (
 func CreateRoutes(app *fiber.App) {
 
 	v1 := app.Group("/api/v1")
+	v1.Get("/github/exchange/:code",gh.GetAccessToken)
 	v1.Post("/project", pr.CreateProject)
 	v1.Get("/pods/:namespace", controllers.GetAllPods)
 	v1.Get("/pods/:namespace/:pod", controllers.GetPod)

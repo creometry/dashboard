@@ -14,7 +14,7 @@ export const Steps = () => {
     const navigate = useNavigate()
     const {
         REACT_APP_GITHUB_CLIENT_ID,
-        REACT_APP_GITHUB_CLIENT_SECRET,
+        REACT_APP_URL,
         REACT_APP_VENDOR,
         REACT_APP_TOKEN,
         REACT_APP_SUCCESS_URL,
@@ -41,14 +41,15 @@ export const Steps = () => {
 
     const exchange = async (code) => {
         try {
-            const resp = await axios.get(`https://cors-anywhere.herokuapp.com/https://github.com/login/oauth/access_token?client_id=${REACT_APP_GITHUB_CLIENT_ID}&client_secret=${REACT_APP_GITHUB_CLIENT_SECRET}&code=${code}`
-                , { headers: { accept: 'application/json' } })
+            const resp = await axios.get(`${REACT_APP_URL}/api/v1/github/exchange/${code}`
+            )
+            console.log("resp : ", resp.data)
             const access_token = resp.data.access_token
             console.log("access_token: ", access_token)
             // set access_token in cookie
             setCookie("access_token", access_token, { path: "/" })
         } catch (err) {
-            console.log("err : " + err)
+            console.log("get acces_token err : " + err)
         }
     }
 
@@ -182,12 +183,11 @@ export const Steps = () => {
 
                 <LoginGithub
                     clientId={REACT_APP_GITHUB_CLIENT_ID}
-                    redirectUri="http://localhost:3000/steps"
                     onSuccess={onSuccess}
                     onFailure={onFailure}
                     className="flex items-center bg-gray-900 rounded-md py-3 px-2 cursor-pointer hover:bg-gray-700 text-gray-100"
                     buttonText="Login with GitHub"
-                    scopes="user,public_repo"
+                    scopes="user"
                 />
 
             }

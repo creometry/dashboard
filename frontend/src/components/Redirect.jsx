@@ -1,10 +1,13 @@
 import axios from 'axios'
 import React, { useEffect, useState } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
+import { useCookies } from 'react-cookie';
+
 
 export const Redirect = () => {
     const [searchParams] = useSearchParams()
     const [loading, setLoading] = useState(true)
+    const [cookies, setCookie] = useCookies(["access_token"]);
     const navigate = useNavigate()
     useEffect(() => {
         const token = searchParams.get('payment_token')
@@ -14,6 +17,13 @@ export const Redirect = () => {
             navigate('/steps')
             return
         }
+        // check if access token is present
+        if (!cookies.access_token) {
+            alert("Could not validate payment")
+            localStorage.clear()
+            navigate('/steps')
+        }
+
         const checkPayment = async () => {
             // make axios request to check if the payment is valid or not with authorization header
             try {
@@ -35,7 +45,6 @@ export const Redirect = () => {
 
                 localStorage.setItem('user_data', JSON.stringify(userData))
 
-                setLoading(false)
 
             } catch (err) {
                 localStorage.removeItem('user_data')
@@ -47,20 +56,23 @@ export const Redirect = () => {
         }
         checkPayment()
         // get user data from github access_token and set it in localStorage
-        // const getUserData = async () => {
-        //     try {
-        //         const resp = await axios.get(`https://api.github.com/user`, {
-        //             headers: {
-        //                 Authorization: `token ${cookies.access_token}`
-        //             }
-        //         })
-        //         localStorage.setItem('user_data', JSON.stringify(resp.data))
-        //         setLoading(false)
-        //     } catch (err) {
-        //         console.log("err : " + err)
-        //     }
-        // }
-        // getUserData()
+        const getUserData = async () => {
+            try {
+                console.log(cookies.access_token)
+                const resp = await axios.get(`https://api.github.com/user`, {
+                    headers: {
+                        Authorization: `token ${cookies.access_token}`
+                    }
+                })
+                console.log(resp.data)
+                localStorage.setItem('user_data', JSON.stringify(resp.data))
+            } catch (err) {
+                console.log("get user data err : " + err)
+            }
+        }
+        getUserData()
+        setLoading(false)
+
         // eslint-disable-next-line
         // create project + ns + repo + branch then redirect user to dashboard
     }, [])
