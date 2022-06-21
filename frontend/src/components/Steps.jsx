@@ -12,7 +12,15 @@ export const Steps = () => {
     const [cookies, setCookie] = useCookies(["access_token"]);
     console.log(cookies.access_token)
     const navigate = useNavigate()
-    const { REACT_APP_GITHUB_CLIENT_ID, REACT_APP_GITHUB_CLIENT_SECRET } = process.env
+    const {
+        REACT_APP_GITHUB_CLIENT_ID,
+        REACT_APP_GITHUB_CLIENT_SECRET,
+        REACT_APP_VENDOR,
+        REACT_APP_TOKEN,
+        REACT_APP_SUCCESS_URL,
+        REACT_APP_ERROR_URL,
+        REACT_APP_CREATE_PAYMENT_URL,
+        REACT_APP_CREATE_PAYMENT_GATEWAY } = process.env
     const [step, setStep] = useState(1)
     const [projectName, setProjectName] = useState(localStorage.getItem('projectName') || '')
     const [repoName, setRepoName] = useState(localStorage.getItem('repoName') || '')
@@ -31,39 +39,63 @@ export const Steps = () => {
         setStep(2)
     }
 
-    const onSuccess = response => {
+    const exchange = async (code) => {
+        try {
+            const resp = await axios.get(`https://cors-anywhere.herokuapp.com/https://github.com/login/oauth/access_token?client_id=${REACT_APP_GITHUB_CLIENT_ID}&client_secret=${REACT_APP_GITHUB_CLIENT_SECRET}&code=${code}`
+                , { headers: { accept: 'application/json' } })
+            const access_token = resp.data.access_token
+            console.log("access_token: ", access_token)
+            // set access_token in cookie
+            setCookie("access_token", access_token, { path: "/" })
+        } catch (err) {
+            console.log("err : " + err)
+        }
+    }
+
+    const onSuccess = async (response) => {
         // extract code from response
         const code = response.code;
         console.log("code: ", code)
         // exchange code for github access_token
-        const exchange = async (code) => {
-            try {
-                const resp = await axios.post(`https://github.com/login/oauth/access_token?client_id=${REACT_APP_GITHUB_CLIENT_ID}&client_secret=${REACT_APP_GITHUB_CLIENT_SECRET}&code=${code}`
-                )
-                console.log(resp)
-                const access_token = resp.data.access_token
-                console.log("access_token: ", access_token)
-                // set access_token in cookie
-                setCookie("access_token", access_token, { path: "/" })
-            } catch (err) {
-                console.log("err : " + err)
-            }
-        }
-
         exchange(code)
-        // start payment flow based on plan
-        let amount = 0
-        switch (plan) {
-            case 'Starter':
-                amount = 49
-            case 'Pro':
-                amount = 99
-            case 'Elite':
-                amount = 149
+        // calculate price based on plan
+        const price = plan === 'Starter' ? 49 : plan === 'Pro' ? 99 : plan === 'Elite' ? 199 : 0
+
+        try {
+            const resp = await fetch(
+                REACT_APP_CREATE_PAYMENT_URL,
+                {
+                    method: "POST",
+                    body: JSON.stringify({ vendor: REACT_APP_VENDOR, amount: price, note: "test" }),
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Token ${REACT_APP_TOKEN}`,
+                    },
+                }
+            );
+            // get the response as json
+            const data = await resp.json();
+
+            if (data.message !== "Success") {
+                navigate('/paymenterror')
+            }
+
+            const token = data.data.token;
+
+            // submit a form with the token as a hidden field
+            const form = document.createElement("form");
+            form.action = REACT_APP_CREATE_PAYMENT_GATEWAY;
+            form.method = "POST";
+            form.innerHTML = `<input type="hidden" name="payment_token" value="${token}">`;
+            form.innerHTML += `<input type="hidden" name="url_ok" value="${REACT_APP_SUCCESS_URL}">`;
+            form.innerHTML += `<input type="hidden" name="url_ko" value="${REACT_APP_ERROR_URL}">`;
+
+            document.body.appendChild(form);
+            form.submit();
+        } catch (err) {
+            console.log(err)
+            navigate('/paymenterror')
         }
-
-        // redirect to payment page
-
 
     };
     const onFailure = response => {
