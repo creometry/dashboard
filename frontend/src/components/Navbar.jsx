@@ -1,9 +1,26 @@
 import React from 'react'
+import useStore from '../zustand/state';
 
 export const Navbar = () => {
-    const { REACT_APP_NAMESPACE } = process.env;
+    const { user, setUser } = useStore();
+    const { REACT_APP_NAMESPACE, REACT_APP_URL } = process.env;
+    const handleLogout = () => {
+        setUser({
+            id: "",
+            login: "",
+            name: "",
+            access_token: "",
+            avatar_url: "",
+            email: "",
+        })
+        // redirect to /login
+        window.location.href = "/login"
+    }
     return (
         <div className="bg-zinc-800 h-12 flex justify-between items-center  px-12">
+            <div className='text-gray-200'>
+                Hello {user.name}
+            </div>
             <div className="bg-creo text-gray-200 px-3 py-1 rounded-md cursor-pointer font-bold">
                 Namespace : {REACT_APP_NAMESPACE}
             </div>
@@ -47,6 +64,9 @@ export const Navbar = () => {
                         />
                     </button>
                 </div>
+            </div>
+            <div className='text-gray-200 font-semibold underline cursor-pointer' onClick={() => handleLogout()}>
+                Logout
             </div>
         </div>
     )

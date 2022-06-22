@@ -17,6 +17,7 @@ import { NotFound } from "./components/NotFound";
 import { PaymentError } from "./components/PaymentError";
 import { Redirect } from "./components/Redirect";
 import { Steps } from "./components/Steps";
+import { Login } from "./components/Login";
 
 export default function App() {
   return (
@@ -25,6 +26,7 @@ export default function App() {
         <Route path="/paymenterror" element={<PaymentError />} />
         <Route path="/success" element={<Redirect />} />
         <Route path="/steps" element={<Steps />} />
+        <Route path="/login" element={<Login />} />
         <Route
           path="/"
           element={

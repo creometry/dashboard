@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import LoginGithub from 'react-login-github';
 import axios from 'axios';
 import { useCookies } from 'react-cookie';
+import useStore from '../zustand/state';
 
 
 
@@ -10,7 +11,7 @@ export const Steps = () => {
     const [searchParams] = useSearchParams()
     const plan = searchParams.get('plan')
     const [cookies, setCookie] = useCookies(["access_token"]);
-    console.log(cookies.access_token)
+    const { user, setUser } = useStore();
     const navigate = useNavigate()
     const {
         REACT_APP_GITHUB_CLIENT_ID,
@@ -105,13 +106,18 @@ export const Steps = () => {
     };
 
     useEffect(() => {
+        if (user.access_token !== "") {
+            // the user is logged in so we should redirect to "/"
+            navigate('/')
+            return
+        }
         if ((!plan) || (plan !== "Starter" && plan !== "Pro" && plan !== "Elite")) {
             const code = searchParams.get('code')
             if (code) { console.log("closing...") }
             else {
                 alert('Invalid plan, redirecting to starter plan')
-                navigate('/steps?plan=Starter')
                 localStorage.clear()
+                navigate('/steps?plan=Starter')
             }
         }
     }, [])
