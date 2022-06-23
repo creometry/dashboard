@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react'
-import { useSearchParams, useNavigate } from 'react-router-dom'
+import { useSearchParams, useNavigate, Link } from 'react-router-dom'
 import LoginGithub from 'react-login-github';
-import axios from 'axios';
 import { useCookies } from 'react-cookie';
 import useStore from '../zustand/state';
+import { createPayment } from '../payment/payment';
+import { exchange } from '../github/github';
 
 
 
-export const Steps = () => {
+export const Steps = ({ onlyLogin }) => {
     const [searchParams] = useSearchParams()
     const plan = searchParams.get('plan')
     const [cookies, setCookie] = useCookies(["access_token"]);
-    const { user, setUser } = useStore();
+    const { user } = useStore();
     const navigate = useNavigate()
     const {
         REACT_APP_GITHUB_CLIENT_ID,
@@ -40,43 +41,26 @@ export const Steps = () => {
         setStep(2)
     }
 
-    const exchange = async (code) => {
-        try {
-            const resp = await axios.get(`${REACT_APP_URL}/api/v1/github/exchange/${code}`
-            )
-            console.log("resp : ", resp.data)
-            const access_token = resp.data.access_token
-            console.log("access_token: ", access_token)
-            // set access_token in cookie
-            setCookie("access_token", access_token, { path: "/" })
-        } catch (err) {
-            console.log("get acces_token err : " + err)
-        }
-    }
-
     const onSuccess = async (response) => {
         // extract code from response
         const code = response.code;
         console.log("code: ", code)
         // exchange code for github access_token
-        exchange(code)
-        // calculate price based on plan
-        const price = plan === 'Starter' ? 49 : plan === 'Pro' ? 99 : plan === 'Elite' ? 199 : 0
+        const data = await exchange(code, REACT_APP_URL)
+        if (data.error) {
+            console.log("error: ", data.error)
+            return
+        } else {
+            console.log("data: ", data)
+            setCookie("access_token", data.access_token, { path: "/" })
+        }
 
-        try {
-            const resp = await fetch(
-                REACT_APP_CREATE_PAYMENT_URL,
-                {
-                    method: "POST",
-                    body: JSON.stringify({ vendor: REACT_APP_VENDOR, amount: price, note: "test" }),
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Token ${REACT_APP_TOKEN}`,
-                    },
-                }
-            );
-            // get the response as json
-            const data = await resp.json();
+        // calculate price based on plan
+        if (onlyLogin !== true) {
+            const price = plan === 'Starter' ? 49 : plan === 'Pro' ? 99 : plan === 'Elite' ? 199 : 0
+
+            // create payment
+            const data = await createPayment(REACT_APP_CREATE_PAYMENT_URL, REACT_APP_VENDOR, price, REACT_APP_TOKEN)
 
             if (data.message !== "Success") {
                 navigate('/paymenterror')
@@ -94,9 +78,9 @@ export const Steps = () => {
 
             document.body.appendChild(form);
             form.submit();
-        } catch (err) {
-            console.log(err)
-            navigate('/paymenterror')
+
+        } else {
+            navigate("/success?onlyLogin=true")
         }
 
     };
@@ -111,13 +95,15 @@ export const Steps = () => {
             navigate('/')
             return
         }
-        if ((!plan) || (plan !== "Starter" && plan !== "Pro" && plan !== "Elite")) {
-            const code = searchParams.get('code')
-            if (code) { console.log("closing...") }
-            else {
-                alert('Invalid plan, redirecting to starter plan')
-                localStorage.clear()
-                navigate('/steps?plan=Starter')
+        if (onlyLogin !== true) {
+            if ((!plan) || (plan !== "Starter" && plan !== "Pro" && plan !== "Elite")) {
+                const code = searchParams.get('code')
+                if (code) { console.log("closing...") }
+                else {
+                    alert('Invalid plan, redirecting to starter plan')
+                    localStorage.clear()
+                    navigate('/steps?plan=Starter')
+                }
             }
         }
     }, [])
@@ -126,7 +112,7 @@ export const Steps = () => {
         <div
             className='flex flex-col justify-center items-center h-screen bg-gray-100'
         >
-            {step === 1 && <div className='flex flex-col items-center'>
+            {(step === 1 && onlyLogin === false) && <div className='flex flex-col items-center'>
 
                 <div className='text-2xl font-bold text-gray-700'>
                     Fill this form to continue
@@ -184,8 +170,13 @@ export const Steps = () => {
                     <button type="submit" className='py-2 px-6 border rounded-md bg-creo text-white'>Next</button>
 
                 </form>
+                <a
+                    href='/login'
+                    className='underline cursor-pointer text-lg mt-3 font-bold text-gray-700'>
+                    Or login with github and choose a plan and pay for it later
+                </a>
             </div>}
-            {step === 2 &&
+            {(step === 2 || onlyLogin) === true &&
 
                 <LoginGithub
                     clientId={REACT_APP_GITHUB_CLIENT_ID}

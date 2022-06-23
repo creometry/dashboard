@@ -10,11 +10,16 @@ export const Sidebar = () => {
     const [hpa, setHpa] = useState(false);
     const [customResource, setCustomResource] = useState(false);
     const [observability, setObservability] = useState(false);
+    const [planPaid, setPlanPaid] = useState(localStorage.getItem('plan') !== 'not_specified');
     return (
         <div className="lg:w-1/6 w-1/4 h-7/6 text-gray-400 bg-zinc-700 shadow-md flex flex-col items-center overflow-y-scroll scrollbar-thin scrollbar-thumb-creo scrollbar-track-gray-500">
             <div className="h-12 w-12">
                 <img src={creometryLogo} alt="logo" />
             </div>
+            {planPaid === false &&
+                <div className='mt-3 font-bold bg-red-600 text-white rounded-md px-1 py-1 hover:bg-red-500 cursor-pointer'>
+                    Choose a plan continue
+                </div>}
             <ul className="font-semibold text-lg pt-4 w-full flex flex-col">
                 <li
                     className="p-2 w-full rounded-md hover:bg-creo hover:text-gray-100 cursor-pointer flex items-center justify-between"

@@ -25,8 +25,8 @@ export default function App() {
       <Routes>
         <Route path="/paymenterror" element={<PaymentError />} />
         <Route path="/success" element={<Redirect />} />
-        <Route path="/steps" element={<Steps />} />
-        <Route path="/login" element={<Login />} />
+        <Route path="/steps" element={<Steps onlyLogin={false} />} />
+        <Route path="/login" element={<Steps onlyLogin={true} />} />
         <Route
           path="/"
           element={

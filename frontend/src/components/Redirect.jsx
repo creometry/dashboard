@@ -3,58 +3,53 @@ import React, { useEffect, useState } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useCookies } from 'react-cookie';
 import useStore from '../zustand/state';
+import { checkPayment } from '../payment/payment';
 
 
 export const Redirect = () => {
     const [searchParams] = useSearchParams()
     const [loading, setLoading] = useState(true)
+    const [onlyLogin, setOnlyLogin] = useState(false)
     const [cookies, setCookie] = useCookies(["access_token"]);
     const { user, setUser } = useStore();
     const navigate = useNavigate()
     useEffect(() => {
         const token = searchParams.get('payment_token')
-        if (!token) {
-            alert("Could not validate payment")
-            localStorage.clear()
-            navigate('/steps')
-            return
-        }
-        // check if access token is present
-        if (!cookies.access_token) {
-            alert("Could not validate payment")
-            localStorage.clear()
-            navigate('/steps')
-        }
+        const onlyLogin = searchParams.get('onlyLogin')
+        if (onlyLogin !== null && onlyLogin === "true") {
+            setOnlyLogin(true)
+            localStorage.setItem('plan', "not_specified")
+        } else {
 
-        const checkPayment = async () => {
-            // make axios request to check if the payment is valid or not with authorization header
-            try {
-                const resp = await axios.get(`https://sandbox.paymee.tn/api/v1/payments/${token}/check`, {
-                    headers: {
-                        Authorization: `Token ${process.env.REACT_APP_TOKEN}`
-                    }
-                })
+            if (!token) {
+                alert("Could not validate payment, token not provided")
+                localStorage.clear()
+                navigate('/steps')
+                return
+            }
+            // check if access token is present
+            if (!cookies.access_token) {
+                alert("Could not validate payment")
+                localStorage.clear()
+                navigate('/steps')
+            }
 
-                if (resp.data.message !== "Success") {
+            const payment = async () => {
+                const resp = await checkPayment(token, process.env.REACT_APP_TOKEN)
+                console.log(resp)
+                if (resp !== "Success") {
                     localStorage.removeItem('user_data')
                     navigate('/paymenterror')
                     return
                 }
-
-
-            } catch (err) {
-                localStorage.removeItem('user_data')
-                navigate('/paymenterror')
-                return
             }
-
+            payment()
 
         }
-        checkPayment()
+
         // get user data from github access_token and set it in localStorage
         const getUserData = async () => {
             try {
-                console.log(cookies.access_token)
                 const resp = await axios.get(`https://api.github.com/user`, {
                     headers: {
                         Authorization: `token ${cookies.access_token}`
@@ -80,19 +75,19 @@ export const Redirect = () => {
         // eslint-disable-next-line
         // create project + ns + repo + branch then redirect user to dashboard
 
-        // redirect to dashboard after 2 seconds
+        // redirect to dashboard after 3 seconds
         setTimeout(() => {
             navigate('/')
         }
-            , 2000)
+            , 3000)
     }, [])
     return (
         <div className='flex flex-col justify-center items-center h-screen'>
             {loading === false &&
                 <div>
-                    <div className='text-3xl text-green-500 font-bold'>
+                    {onlyLogin === false && <div className='text-3xl text-green-500 font-bold'>
                         Successful Payment!
-                    </div>
+                    </div>}
                     {user.access_token !== "" &&
 
                         <div className='flex items-center'>

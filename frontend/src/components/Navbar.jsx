@@ -1,9 +1,11 @@
 import React from 'react'
+import { useCookies } from 'react-cookie';
 import useStore from '../zustand/state';
 
 export const Navbar = () => {
     const { user, setUser } = useStore();
     const { REACT_APP_NAMESPACE, REACT_APP_URL } = process.env;
+    const [cookies, setCookie, removeCookie] = useCookies(["access_token"]);
     const handleLogout = () => {
         setUser({
             id: "",
@@ -13,6 +15,8 @@ export const Navbar = () => {
             avatar_url: "",
             email: "",
         })
+        localStorage.clear()
+        // removeCookie("access_token", { path: "/" })
         // redirect to /login
         window.location.href = "/login"
     }
