@@ -26,4 +26,9 @@ const useStore = create(
   )
 );
 
+export const usePopup = create((set, get) => ({
+  isOpen: false,
+  setIsOpen: (isOpen) => set((state) => ({ isOpen })),
+}));
+
 export default useStore;

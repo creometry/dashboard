@@ -17,9 +17,11 @@ import { NotFound } from "./components/NotFound";
 import { PaymentError } from "./components/PaymentError";
 import { Redirect } from "./components/Redirect";
 import { Steps } from "./components/Steps";
-import { Login } from "./components/Login";
 
 export default function App() {
+  window.onbeforeunload = function () {
+    localStorage.clear();
+  };
   return (
     <BrowserRouter>
       <Routes>
