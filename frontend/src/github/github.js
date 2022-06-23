@@ -16,3 +16,22 @@ export const exchange = async (code, url) => {
     };
   }
 };
+
+export const getUserData = async (access_token) => {
+  try {
+    const resp = await axios.get(`https://api.github.com/user`, {
+      headers: {
+        Authorization: `token ${access_token}`,
+      },
+    });
+    return {
+      user: resp.data,
+      error: null,
+    };
+  } catch (err) {
+    return {
+      user: null,
+      error: "get user data err : " + err,
+    };
+  }
+};

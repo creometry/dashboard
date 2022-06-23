@@ -4,6 +4,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useCookies } from 'react-cookie';
 import useStore from '../zustand/state';
 import { checkPayment } from '../payment/payment';
+import { getUserData } from '../github/github';
 
 
 export const Redirect = () => {
@@ -44,36 +45,31 @@ export const Redirect = () => {
                 }
             }
             payment()
-
         }
 
         // get user data from github access_token and set it in localStorage
-        const getUserData = async () => {
-            try {
-                const resp = await axios.get(`https://api.github.com/user`, {
-                    headers: {
-                        Authorization: `token ${cookies.access_token}`
-                    }
-                })
+        const resp = getUserData(cookies.access_token)
+        resp.then(res => {
+            const user = res.user
+            if (user) {
                 setUser(
                     {
-                        id: resp.data.id,
-                        login: resp.data.login,
-                        name: resp.data.name,
+                        id: user.id,
+                        login: user.login,
+                        name: user.name,
                         access_token: cookies.access_token,
-                        avatar_url: resp.data.avatar_url,
-                        email: resp.data.email,
+                        avatar_url: user.avatar_url,
+                        email: user.email,
                     }
                 )
-            } catch (err) {
-                console.log("get user data err : " + err)
+            } else {
+                console.log(res.error)
             }
-        }
-        getUserData()
+        })
         setLoading(false)
 
         // eslint-disable-next-line
-        // create project + ns + repo + branch then redirect user to dashboard
+        // create project (this should return the namespace name and the kubeconfig) then redirect user to dashboard
 
         // redirect to dashboard after 3 seconds
         setTimeout(() => {
@@ -86,7 +82,7 @@ export const Redirect = () => {
             {loading === false &&
                 <div>
                     {onlyLogin === false && <div className='text-3xl text-green-500 font-bold'>
-                        Successful Payment!
+                        Successful Payment! <span className='ml-1'>Creating your project...</span>
                     </div>}
                     {user.access_token !== "" &&
 

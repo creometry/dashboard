@@ -25,37 +25,37 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func CreateProject(req ReqData) (kubeconfig string, err error) {
+func CreateProject(req ReqData) (data RespDataCreateProjectAndRepo, err error) {
 	// decode the id_token (JWT)
 	
 	// create gitRepo
 	repoName,err:= createGitRepo(req.GitRepoName,req.GitRepoUrl,req.GitRepoBranch)
 	if err != nil {
-		return "", err
+		return RespDataCreateProjectAndRepo{}, err
 	}
 	fmt.Printf("Created repo : %s",repoName)
 
 	// create rancher project
 	projectId, err := createRancherProject(req.UsrProjectName,req.Plan)
 	if err != nil {
-		return "", err
+		return RespDataCreateProjectAndRepo{}, err
 	}
 
 	// create user in rancher and get user id
 	userId,principalIds, err := createUser(req.Username)
 
 	if err != nil {
-		return "", err
+		return RespDataCreateProjectAndRepo{}, err
 	}
 
 	if len(principalIds) == 0 {
-		return "", fmt.Errorf("User already exists")
+		return RespDataCreateProjectAndRepo{}, fmt.Errorf("User already exists")
 	}
 
 	// add user to project
 	_, err = addUserToProject(userId, principalIds,projectId)
 	if err != nil {
-		return "", err
+		return RespDataCreateProjectAndRepo{}, err
 	}
 
 	// create a new namespace with annotation "projectId"
@@ -94,7 +94,7 @@ func CreateProject(req ReqData) (kubeconfig string, err error) {
 
 	newNs, err := nsClient.Create(context.TODO(), ns, metav1.CreateOptions{})
 	if err != nil {
-		return "", err
+		return RespDataCreateProjectAndRepo{}, err
 	}
 	log.Println("Created Namespace:", newNs.Name)
 
@@ -112,7 +112,11 @@ func CreateProject(req ReqData) (kubeconfig string, err error) {
 	if err != nil {
 		return "", err
 	}*/
-	return "kubeconfig", nil
+	resp :=RespDataCreateProjectAndRepo{
+		Kubeconfig: "kubeconfig",
+		Namespace: nsName,
+	}
+	return resp, nil
 
 }
 

@@ -45,6 +45,11 @@ type RespData struct {
 	ProjectId string `json:"id"`
 }
 
+type RespDataCreateProjectAndRepo struct {
+	Kubeconfig string `json:"kubeconfig"`
+	Namespace string `json:"namespace"`
+}
+
 type RespDataRoleBinding struct {
 	RoleTemplateId string `json:"roleTemplateId"`
 	Name           string `json:"name"`

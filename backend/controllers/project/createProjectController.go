@@ -20,13 +20,14 @@ func CreateProject(c *fiber.Ctx) error {
 		})
 	}
 
-	kubeconfig, err := project.CreateProject(*reqData)
+	data, err := project.CreateProject(*reqData)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
 		})
 	}
 	return c.JSON(fiber.Map{
-		"kubeconfig": kubeconfig,
+		"kubeconfig": data.Kubeconfig,
+		"namespace":  data.Namespace,
 	})
 }
