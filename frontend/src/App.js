@@ -19,9 +19,6 @@ import { Redirect } from "./components/Redirect";
 import { Steps } from "./components/Steps";
 
 export default function App() {
-  window.onbeforeunload = function () {
-    localStorage.clear();
-  };
   return (
     <BrowserRouter>
       <Routes>
