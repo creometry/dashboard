@@ -12,6 +12,7 @@ import { PvcList } from "./components/resources/PvcList";
 import { SecretList } from "./components/resources/SecretList";
 import { ServiceList } from "./components/resources/ServiceList";
 import { EndpointList } from "./components/resources/EndpointList";
+import { StatefulSetList } from "./components/resources/StatefulSetList";
 import { EventList } from "./components/resources/EventList";
 import { NotFound } from "./components/NotFound";
 import { PaymentError } from "./components/PaymentError";
@@ -46,7 +47,7 @@ export default function App() {
           path="/deployments"
           element={
             <Layout>
-              <DeploymentList isSts={false} />
+              <DeploymentList />
             </Layout>
           }
         />
@@ -62,7 +63,7 @@ export default function App() {
           path="/statefulsets"
           element={
             <Layout>
-              <DeploymentList isSts={true} />
+              <StatefulSetList />
             </Layout>
           }
         />
