@@ -28,7 +28,6 @@ export const Steps = ({ onlyLogin }) => {
     const [repoName, setRepoName] = useState(localStorage.getItem('repoName') || '')
     const [repoUrl, setRepoUrl] = useState(localStorage.getItem('repoUrl') || '')
     const [repoBranch, setRepoBranch] = useState(localStorage.getItem('repoBranch') || '')
-    const [namespace, setNamespace] = useState(localStorage.getItem('namespace') || '')
 
     const handleSubmit = (e) => {
         e.preventDefault()
@@ -37,7 +36,6 @@ export const Steps = ({ onlyLogin }) => {
         localStorage.setItem('repoUrl', repoUrl)
         localStorage.setItem('repoBranch', repoBranch)
         localStorage.setItem('plan', plan)
-        localStorage.setItem('namespace', namespace)
         setStep(2)
     }
 
@@ -126,16 +124,6 @@ export const Steps = ({ onlyLogin }) => {
                     " id="projectName" type="text" placeholder="Project Name" required
                             value={projectName}
                             onChange={(e) => setProjectName(e.target.value)}
-                        />
-                    </div>
-                    <div className="mb-4 w-full">
-                        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="namespace">
-                            Namespace
-                        </label>
-                        <input className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:border-creo
-                    " id="namespace" type="text" placeholder="Namespace" required
-                            value={namespace}
-                            onChange={(e) => setNamespace(e.target.value)}
                         />
                     </div>
                     <div className="mb-4 w-full">
