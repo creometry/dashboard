@@ -4,13 +4,11 @@ import "fmt"
 
 type ReqData struct {
 	UsrProjectName string `json:"projectName"`
-	Namespace	  string `json:"namespace"`
 	Username   string `json:"username"`
 	Plan 		 string `json:"plan"`
 	GitRepoName string `json:"gitRepoName"`
 	GitRepoBranch string `json:"gitRepoBranch"`
 	GitRepoUrl string `json:"gitRepoUrl"`
-	Access_token 	 string `json:"access_token"`
 }
 
 func (r *ReqData) Validate() error {
@@ -22,12 +20,6 @@ func (r *ReqData) Validate() error {
 	}
 	if r.Username == "" {
 		return fmt.Errorf("username is required")
-	}
-	if r.Access_token == "" {
-		return fmt.Errorf("access_token is required")
-	}
-	if r.Namespace == "" {
-		return fmt.Errorf("namespace is required")
 	}
 	if r.GitRepoName == "" {
 		return fmt.Errorf("gitRepoName is required")
@@ -46,7 +38,7 @@ type RespData struct {
 }
 
 type RespDataCreateProjectAndRepo struct {
-	Kubeconfig string `json:"kubeconfig"`
+	User_token string `json:"user_token"`
 	Namespace string `json:"namespace"`
 }
 
@@ -76,4 +68,8 @@ type RespDataLogin struct {
 
 type RespDataCreateGitRepo struct {
 	Id 			 string `json:"id"`
+}
+
+type ReqDataKubeconfig struct {
+	Token string `json:"token"`
 }

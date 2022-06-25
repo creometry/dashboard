@@ -3,11 +3,8 @@ package project
 import (
 	"bytes"
 	"context"
-	_ "context"
 	"crypto/sha1"
-	_ "crypto/sha1"
 	"encoding/base64"
-	_ "encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -15,12 +12,9 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	_ "strings"
 	"time"
-	_ "time"
 
 	"github.com/Creometry/dashboard/auth"
-	_ "github.com/Creometry/dashboard/auth"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -49,7 +43,7 @@ func CreateProject(req ReqData) (data RespDataCreateProjectAndRepo, err error) {
 	}
 
 	if len(principalIds) == 0 {
-		return RespDataCreateProjectAndRepo{}, fmt.Errorf("User already exists")
+		return RespDataCreateProjectAndRepo{}, fmt.Errorf("user already exists")
 	}
 
 	// add user to project
@@ -77,14 +71,14 @@ func CreateProject(req ReqData) (data RespDataCreateProjectAndRepo, err error) {
 	rand = strings.Replace(rand, " ", "x", -1)
 	rand = strings.Replace(rand, ",", "x", -1)
 
-	nsName := strings.ToLower(req.Namespace) + "-" + strings.ToLower(rand)
+	nsName := strings.ToLower(req.UsrProjectName) + "-" + strings.ToLower(rand)
 
 
 	ns := &v1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: 	nsName,
 			Annotations: map[string]string{
-				"field.cattle.io/projectId": fmt.Sprintf(projectId),
+				"field.cattle.io/projectId": projectId,
 			},
 			Labels: map[string]string{
 				"field.cattle.io/projectId": strings.Split(projectId, ":")[1],
@@ -100,21 +94,15 @@ func CreateProject(req ReqData) (data RespDataCreateProjectAndRepo, err error) {
 
 
 	// login as user to get token
-	/* token, err := loginAsUser(req.Username, "testtesttest")
+	token, err := loginAsUser(req.Username, "testtesttest")
 
 	if err != nil {
-		return "", err
-	} */
+		return RespDataCreateProjectAndRepo{}, err
+	} 
 
-
-	// get kubeconfig (still not working)
-	/*kubeconfig, err = getKubeConfig(req.Id_token,projectId)
-	if err != nil {
-		return "", err
-	}*/
 	resp :=RespDataCreateProjectAndRepo{
-		Kubeconfig: "kubeconfig",
-		Namespace: nsName,
+		User_token: token,
+		Namespace: "newNs.Name",
 	}
 	return resp, nil
 
@@ -123,7 +111,7 @@ func CreateProject(req ReqData) (data RespDataCreateProjectAndRepo, err error) {
 func createRancherProject(usrProjectName string,plan string) (string, error) {
 	resourceQuota:= genResourceQuotaFromPlan(plan)
 	if resourceQuota == "nil" {
-		return "", fmt.Errorf("Invalid plan")
+		return "", fmt.Errorf("invalid plan")
 	}
 	req, err := http.NewRequest("POST", os.Getenv("CREATE_PROJECT_URL"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"name":"%s","clusterId":"%s",%s}`, usrProjectName, os.Getenv("CLUSTER_ID"),resourceQuota))))
 	if err != nil {
@@ -260,8 +248,8 @@ func genResourceQuotaFromPlan(plan string) string {
 	return "nil"
 }
 
-func getKubeConfig(token string,projectId string)(string, error) {
-	req, err := http.NewRequest("POST", fmt.Sprintf("https://tn.cloud.creometry.com/v3/projects/%s?action=generateKubeconfig",projectId), nil)
+func GetKubeConfig(token string)(string, error) {
+	req, err := http.NewRequest("POST", fmt.Sprintf("https://tn.cloud.creometry.com/v3/clusters/%s?action=generateKubeconfig",os.Getenv("CLUSTER_ID")), nil)
 	if err != nil {
 		return "", err
 	}
@@ -293,7 +281,7 @@ func getKubeConfig(token string,projectId string)(string, error) {
 
 func addUserToProject(userId string,principalIds []string,projectId string) (RespDataRoleBinding, error) {
 
-	req, err := http.NewRequest("POST", os.Getenv("ADD_USER_TO_PROJECT_URL"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"userId":"%s/%s","projectId":"%s","roleTemplateId":"project-member"}`, userId, principalIds[0],projectId))))
+	req, err := http.NewRequest("POST", os.Getenv("ADD_USER_TO_PROJECT_URL"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"userId":"%s","projectId":"%s","roleTemplateId":"project-member"}`, userId,projectId))))
 	if err != nil {
 		return RespDataRoleBinding{}, err
 	}
@@ -321,6 +309,8 @@ func addUserToProject(userId string,principalIds []string,projectId string) (Res
 	return dt, nil
 
 }
+
+//func addClusterRoleBinding
 
 func createUser(username string)(string,[]string,error){
 	req, err := http.NewRequest("POST", os.Getenv("CREATE_USER_URL"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"username":"%s","mustChangePassword": false,"password": "testtesttest","principalIds": [ ]}`, username))))
@@ -356,7 +346,7 @@ func createUser(username string)(string,[]string,error){
 }
 
 func loginAsUser(username string,password string )(string,error){
-	req, err := http.NewRequest("POST", os.Getenv("LOGIN_USER_URL"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"username":%s,"password":%s,"description":null,"ttl":0,"responseType":null}`, username,password))))
+	req, err := http.NewRequest("POST", os.Getenv("LOGIN_USER_URL"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"username":"%s","password":"%s"}`, username,password))))
 	if err != nil {
 		return "", err
 	}
@@ -370,7 +360,6 @@ func loginAsUser(username string,password string )(string,error){
 	if err != nil {
 		return "", err
 	}
-
 	defer resp.Body.Close()
 
 	// parse response body

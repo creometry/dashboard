@@ -27,7 +27,31 @@ func CreateProject(c *fiber.Ctx) error {
 		})
 	}
 	return c.JSON(fiber.Map{
-		"kubeconfig": data.Kubeconfig,
+		"token": data.User_token,
 		"namespace":  data.Namespace,
+	})
+}
+func GenerateKubeConfig (c *fiber.Ctx)error{
+	// get the token from the body
+	reqData := new(project.ReqDataKubeconfig)
+	if err := c.BodyParser(reqData); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+	// check if the request body is valid
+	if reqData.Token == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "token is required",
+		})
+	}
+	data, err := project.GetKubeConfig(reqData.Token)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+	return c.JSON(fiber.Map{
+		"config": data,
 	})
 }
