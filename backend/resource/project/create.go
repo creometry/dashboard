@@ -102,7 +102,7 @@ func CreateProject(req ReqData) (data RespDataCreateProjectAndRepo, err error) {
 
 	resp :=RespDataCreateProjectAndRepo{
 		User_token: token,
-		Namespace: "newNs.Name",
+		Namespace: newNs.Name,
 	}
 	return resp, nil
 
