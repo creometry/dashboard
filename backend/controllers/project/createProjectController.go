@@ -29,6 +29,7 @@ func CreateProject(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{
 		"token": data.User_token,
 		"namespace":  data.Namespace,
+		"rancher_user_id": data.User_id,
 	})
 }
 func GenerateKubeConfig (c *fiber.Ctx)error{
@@ -53,5 +54,27 @@ func GenerateKubeConfig (c *fiber.Ctx)error{
 	}
 	return c.JSON(fiber.Map{
 		"config": data,
+	})
+}
+
+func FindUserAndLoginOrCreate(c *fiber.Ctx)error{
+	// get username from path 
+	username := c.Params("username")
+	if username == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "username is required",
+		})
+	}
+
+	data, err := project.FindUser(username)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+	return c.JSON(fiber.Map{
+		"user_token": data.Token,
+		"user_id": data.Id,
+		"namespace": data.Namespace,
 	})
 }

@@ -28,6 +28,7 @@ export const Steps = ({ onlyLogin }) => {
     const [repoName, setRepoName] = useState(localStorage.getItem('repoName') || '')
     const [repoUrl, setRepoUrl] = useState(localStorage.getItem('repoUrl') || '')
     const [repoBranch, setRepoBranch] = useState(localStorage.getItem('repoBranch') || '')
+    const [error, setError] = useState("")
 
     const handleSubmit = (e) => {
         e.preventDefault()
@@ -37,6 +38,18 @@ export const Steps = ({ onlyLogin }) => {
         localStorage.setItem('repoBranch', repoBranch)
         localStorage.setItem('plan', plan)
         setStep(2)
+    }
+
+    const handleProjectNameChange = (value) => {
+        // the project name should only contain lowercase letters and -, and should not start with a -
+
+        const projectNameRegex = /^[a-z-]+$/
+        if (!projectNameRegex.test(value) && value) {
+            setError("Project name should only contain lowercase letters and -, and should not start with a -")
+        } else {
+            setError("")
+        }
+        setProjectName(value)
     }
 
     const onSuccess = async (response) => {
@@ -123,9 +136,10 @@ export const Steps = ({ onlyLogin }) => {
                         <input className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:border-creo
                     " id="projectName" type="text" placeholder="Project Name" required
                             value={projectName}
-                            onChange={(e) => setProjectName(e.target.value)}
+                            onChange={(e) => handleProjectNameChange(e.target.value)}
                         />
                     </div>
+                    <div className='text-red-500'>{error}</div>
                     <div className="mb-4 w-full">
                         <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="RepositoryName">
                             Repository Name
@@ -155,7 +169,7 @@ export const Steps = ({ onlyLogin }) => {
                         />
                     </div>
 
-                    <button type="submit" className='py-2 px-6 border rounded-md bg-creo text-white'>Next</button>
+                    <button type="submit" className='py-2 px-6 border rounded-md bg-creo text-white' disabled={error !== ""}>Next</button>
 
                 </form>
                 <a

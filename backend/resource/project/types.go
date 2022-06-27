@@ -1,6 +1,8 @@
 package project
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type ReqData struct {
 	UsrProjectName string `json:"projectName"`
@@ -39,6 +41,7 @@ type RespData struct {
 
 type RespDataCreateProjectAndRepo struct {
 	User_token string `json:"user_token"`
+	User_id string `json:"rancher_user_id"`
 	Namespace string `json:"namespace"`
 }
 
@@ -72,4 +75,45 @@ type RespDataCreateGitRepo struct {
 
 type ReqDataKubeconfig struct {
 	Token string `json:"token"`
+}
+
+type RespDataUser struct {
+	Namespace string `json:"namespace"`
+	Id string `json:"id"`
+	Token string `json:"token"`
+	PrincipalIds []string `json:"principalIds"`
+}
+
+type UserData struct {
+	Data []RespDataUser `json:"data"`
+}
+
+type RespDataNs struct {
+	// Data is a map of interface{} to interface{}
+	Data []NsData `json:"data"`
+}
+
+type NsData struct{
+	Id string `json:"id"`
+	Metadata MetadDataData `json:"metadata"`
+}
+type MetadDataData struct {
+	Annotations map[string]string `json:"annotations"`
+}
+
+type RespDataProjectsByUser struct {
+	Data []ProjectRoliBindingsData `json:"data"`
+}
+
+type ProjectRoliBindingsData struct {
+	Id string `json:"id"`
+}
+
+type FindUserData struct {
+	Data []Data `json:"data"`
+}
+
+type Data struct {
+	Id string `json:"id"`
+	PrincipalIds []string `json:"principalIds"`
 }

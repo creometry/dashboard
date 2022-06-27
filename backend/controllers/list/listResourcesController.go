@@ -12,6 +12,7 @@ import (
 	"github.com/Creometry/dashboard/resource/job"
 	"github.com/Creometry/dashboard/resource/persistentvolumeclaim"
 	"github.com/Creometry/dashboard/resource/pod"
+	"github.com/Creometry/dashboard/resource/project"
 	"github.com/Creometry/dashboard/resource/secret"
 	"github.com/Creometry/dashboard/resource/service"
 	"github.com/Creometry/dashboard/resource/statefulset"
@@ -381,5 +382,19 @@ func GetCustomResource(c *fiber.Ctx) error {
 	}
 	return c.JSON(fiber.Map{
 		"data": customResource,
+	})
+}
+
+
+func GetNampespacesByAnnotation(c *fiber.Ctx) error {
+	annotation := c.Params("annotation")
+	namespaces, err := project.GetNamespaceByAnnotation([]string{annotation})
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+	return c.JSON(fiber.Map{
+		"data": namespaces,
 	})
 }

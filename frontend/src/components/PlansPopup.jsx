@@ -23,6 +23,7 @@ export const PlansPopup = () => {
     const [repoName, setRepoName] = useState(localStorage.getItem('repoName') || '')
     const [repoUrl, setRepoUrl] = useState(localStorage.getItem('repoUrl') || '')
     const [repoBranch, setRepoBranch] = useState(localStorage.getItem('repoBranch') || '')
+    const [error, setError] = useState("")
     const choosePlanAndContinue = (plan) => {
         setPlan(plan)
         setStep(2)
@@ -30,6 +31,19 @@ export const PlansPopup = () => {
 
     const goBack = () => {
         setStep(1)
+    }
+
+
+    const handleProjectNameChange = (value) => {
+        // the project name should only contain lowercase letters and -, and should not start with a -
+
+        const projectNameRegex = /^[a-z-]+$/
+        if (!projectNameRegex.test(value) && value) {
+            setError("Project name should only contain lowercase letters and -, and should not start with a -")
+        } else {
+            setError("")
+        }
+        setProjectName(value)
     }
 
     const handleSubmit = async (e) => {
@@ -115,9 +129,10 @@ export const PlansPopup = () => {
                                 <input className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:border-creo
                     " id="projectName" type="text" placeholder="Project Name" required
                                     value={projectName}
-                                    onChange={(e) => setProjectName(e.target.value)}
+                                    onChange={(e) => handleProjectNameChange(e.target.value)}
                                 />
                             </div>
+                            <div className='text-red-500'>{error}</div>
 
                             <div className="mb-4 w-full">
                                 <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="RepositoryName">
@@ -151,7 +166,7 @@ export const PlansPopup = () => {
                                 <div
                                     className='py-2 px-6 border rounded-md mr-1 bg-gray-700 text-white cursor-pointer hover:bg-gray-600'
                                     onClick={() => goBack()}>Go back</div>
-                                <button type="submit" className='py-2 px-6 border rounded-md bg-creo text-white'>Proceed with payment</button>
+                                <button type="submit" className='py-2 px-6 border rounded-md bg-creo text-white' disabled={error !== ""}>Proceed with payment</button>
 
                             </div>
 

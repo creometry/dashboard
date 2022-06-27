@@ -11,7 +11,8 @@ export const CronjobList = () => {
         const getResourceData = async (resource) => {
             try {
                 const resp = await axios.get(
-                    `${REACT_APP_URL}/api/v1/${resource}/${REACT_APP_NAMESPACE}`
+                    `${REACT_APP_URL}/api/v1/${resource}/${localStorage.getItem('namespace') || REACT_APP_NAMESPACE
+                    }`
                 );
                 setData(resp.data.data);
             } catch (error) {

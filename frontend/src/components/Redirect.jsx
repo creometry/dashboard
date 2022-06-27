@@ -11,7 +11,8 @@ export const Redirect = () => {
     const [searchParams] = useSearchParams()
     const [loading, setLoading] = useState(true)
     const [onlyLogin, setOnlyLogin] = useState(false)
-    const [cookies, setCookie] = useCookies(["access_token"]);
+    const [cookies, setCookie] = useCookies(["access_token", "rancher_token"]);
+    const { REACT_APP_CREATE_PROJECT_URL, REACT_APP_GET_USER_URL } = process.env
     const { user, setUser } = useStore();
     const navigate = useNavigate()
     useEffect(() => {
@@ -20,6 +21,48 @@ export const Redirect = () => {
         if (onlyLogin !== null && onlyLogin === "true") {
             setOnlyLogin(true)
             localStorage.setItem('plan', "not_specified")
+
+            // get user data from github access_token and set it in localStorage
+            const resp = getUserData(cookies.access_token)
+            resp.then(res => {
+                const user_data = res.user
+                if (user) {
+                    setUser(
+                        {
+                            id: user_data.id,
+                            login: user_data.login,
+                            name: user_data.name,
+                            access_token: cookies.access_token,
+                            avatar_url: user_data.avatar_url,
+                            email: user_data.email,
+                        }
+                    )
+                    getUserTokens(user_data.login)
+                } else {
+                    console.log(res.error)
+                }
+            })
+
+            const getUserTokens = async (username) => {
+                try {
+                    const resp = await axios.get(REACT_APP_GET_USER_URL + username)
+                    if (resp.data) {
+                        console.log(resp.data)
+                        localStorage.setItem('namespace', resp.data.namespace)
+                        localStorage.setItem('rancher_user_id', resp.data.user_id)
+                        setCookie('rancher_token', resp.data.user_token, { path: '/' })
+                        navigate('/')
+                    }
+                    else {
+                        console.log("problem with rancher user")
+                        navigate('/paymenterror')
+                    }
+                } catch (err) {
+                    console.log(err)
+                    navigate('/paymenterror')
+                }
+
+            }
         } else {
 
             if (!token) {
@@ -45,32 +88,61 @@ export const Redirect = () => {
                 }
             }
             payment()
+
+            // get user data from github access_token and set it in localStorage
+            const resp = getUserData(cookies.access_token)
+            resp.then(res => {
+                const user_data = res.user
+                if (user) {
+                    setUser(
+                        {
+                            id: user_data.id,
+                            login: user_data.login,
+                            name: user_data.name,
+                            access_token: cookies.access_token,
+                            avatar_url: user_data.avatar_url,
+                            email: user_data.email,
+                        }
+                    )
+                    createProject(user_data.login)
+
+                } else {
+                    console.log(res.error)
+                }
+            })
+            // create project (this should return the namespace name and the kubeconfig) then redirect user to dashboard
+            const createProject = async (username) => {
+                try {
+
+                    const resp = await axios.post(REACT_APP_CREATE_PROJECT_URL, {
+                        "projectName": localStorage.getItem('projectName'),
+                        "username": username,
+                        "plan": localStorage.getItem('plan'),
+                        "gitRepoName": localStorage.getItem('repoName'),
+                        "gitRepoBranch": localStorage.getItem('repoBranch'),
+                        "gitRepoURL": localStorage.getItem('repoUrl'),
+                    })
+                    if (resp.data.error) {
+                        console.log(resp.data.error)
+                        navigate('/paymenterror')
+                        return
+                    } else {
+                        console.log(resp.data)
+                        localStorage.setItem('namespace', resp.data.namespace)
+                        localStorage.setItem('rancher_user_id', resp.data.rancher_user_id)
+                        setCookie('rancher_token', resp.data.token, { path: '/' })
+                        navigate('/')
+                    }
+                } catch (err) {
+                    console.log(err)
+                    navigate('/paymenterror')
+                }
+            }
         }
 
-        // get user data from github access_token and set it in localStorage
-        const resp = getUserData(cookies.access_token)
-        resp.then(res => {
-            const user = res.user
-            if (user) {
-                setUser(
-                    {
-                        id: user.id,
-                        login: user.login,
-                        name: user.name,
-                        access_token: cookies.access_token,
-                        avatar_url: user.avatar_url,
-                        email: user.email,
-                    }
-                )
-            } else {
-                console.log(res.error)
-            }
-        })
-        setLoading(false)
-
         // eslint-disable-next-line
-        // create project (this should return the namespace name and the kubeconfig) then redirect user to dashboard
 
+        setLoading(false)
         // redirect to dashboard after 3 seconds
         setTimeout(() => {
             navigate('/')

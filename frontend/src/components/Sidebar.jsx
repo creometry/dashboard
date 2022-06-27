@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link } from "react-router-dom";
 import creometryLogo from "../../src/creo.png";
 import { usePopup } from '../zustand/state';
@@ -11,8 +11,16 @@ export const Sidebar = () => {
     const [hpa, setHpa] = useState(false);
     const [customResource, setCustomResource] = useState(false);
     const [observability, setObservability] = useState(false);
-    const [planPaid, setPlanPaid] = useState(localStorage.getItem('plan') !== 'not_specified' && localStorage.getItem('plan') !== null);
+    const [planPaid, setPlanPaid] = useState(true);
     const { setIsOpen } = usePopup()
+    useEffect(() => {
+        const ns = localStorage.getItem('namespace')
+        if (ns === null || ns === undefined || ns === "") {
+            setPlanPaid(false)
+        } else {
+            setPlanPaid(true)
+        }
+    }, [])
     return (
         <div className="lg:w-1/6 w-1/4 h-7/6 text-gray-400 bg-zinc-700 shadow-md flex flex-col items-center overflow-y-scroll scrollbar-thin scrollbar-thumb-creo scrollbar-track-gray-500">
             <div className="h-12 w-12">
