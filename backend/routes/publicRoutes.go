@@ -14,6 +14,8 @@ func CreateRoutes(app *fiber.App) {
 	v1.Get("/github/exchange/:code",gh.GetAccessToken)
 	v1.Post("/project", pr.CreateProject)
 	v1.Get("/user/:username", pr.FindUserAndLoginOrCreate)
+	v1.Get("/team/:projectId", pr.ListTeamMembers)
+	v1.Post("/team/:projectId/:userId", pr.AddTeamMember)
 	v1.Get("/namespace/:annotation", controllers.GetNampespacesByAnnotation)
 	v1.Post("/kubeconfig", pr.GenerateKubeConfig)
 	v1.Get("/pods/:namespace", controllers.GetAllPods)

@@ -388,13 +388,14 @@ func GetCustomResource(c *fiber.Ctx) error {
 
 func GetNampespacesByAnnotation(c *fiber.Ctx) error {
 	annotation := c.Params("annotation")
-	namespaces, err := project.GetNamespaceByAnnotation([]string{annotation})
+	namespace,projectId, err := project.GetNamespaceByAnnotation([]string{annotation})
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
 		})
 	}
 	return c.JSON(fiber.Map{
-		"data": namespaces,
+		"namespace": namespace,
+		"projectId": projectId,
 	})
 }

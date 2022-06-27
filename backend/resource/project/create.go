@@ -50,7 +50,7 @@ func CreateProject(req ReqData) (data RespDataCreateProjectAndRepo, err error) {
 	}*/
 
 	// add user to project
-	_, err = addUserToProject(userId, principalIds,projectId)
+	_, err = AddUserToProject(userId, principalIds,projectId)
 	if err != nil {
 		return RespDataCreateProjectAndRepo{}, err
 	}
@@ -106,17 +106,18 @@ func CreateProject(req ReqData) (data RespDataCreateProjectAndRepo, err error) {
 		User_token: token,
 		User_id: userId,
 		Namespace: newNs.Name,
+		ProjectId: projectId,
 	}
 	return resp, nil
 
 }
 
-func GetNamespaceByAnnotation(annotations []string)(string,error){
+func GetNamespaceByAnnotation(annotations []string)(string,string,error){
 
 	// http get request to get the namespace list with http client
 	req, err := http.NewRequest("GET",os.Getenv("NAMESPACE_URL"), nil)
 	if err != nil {
-		return "", err
+		return "","", err
 	}
 
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("RANCHER_TOKEN")))
@@ -126,7 +127,7 @@ func GetNamespaceByAnnotation(annotations []string)(string,error){
 	resp, err := client.Do(req)
 
 	if err != nil {
-		return "", err
+		return "", "",err
 	}
 	defer resp.Body.Close()
 
@@ -134,22 +135,22 @@ func GetNamespaceByAnnotation(annotations []string)(string,error){
 	dt := RespDataNs{}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
+		return "", "",err
 	}
 	err = json.Unmarshal(body, &dt)
 	if err != nil {
-		return "", err
+		return "", "",err
 	}
 	for _, annotation := range annotations {
 	newAnnotation := fmt.Sprintf("%s:%s",os.Getenv("CLUSTER_ID"),strings.Split(annotation,":")[0]) 
 	for _, ns := range dt.Data {
 		if ns.Metadata.Annotations["field.cattle.io/projectId"] == newAnnotation{
-			return ns.Id,nil
+			return ns.Id,newAnnotation,nil
 		}
 	}
 }
 	
-	return "", nil
+	return "","", nil
 	
 }
 
@@ -324,7 +325,7 @@ func GetKubeConfig(token string)(string, error) {
 }
 
 
-func addUserToProject(userId string,principalIds []string,projectId string) (RespDataRoleBinding, error) {
+func AddUserToProject(userId string,principalIds []string,projectId string) (RespDataRoleBinding, error) {
 
 	req, err := http.NewRequest("POST", os.Getenv("ADD_USER_TO_PROJECT_URL"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"userId":"%s","projectId":"%s","roleTemplateId":"project-member"}`, userId,projectId))))
 	if err != nil {
@@ -355,11 +356,10 @@ func addUserToProject(userId string,principalIds []string,projectId string) (Res
 
 }
 
-//func addClusterRoleBinding
 
 func createUser(username string)(string,[]string,error){
 	// should check if user exists before creating (TODO)
-	userId,prIds,err:=getUserByUsename(username)
+	userId,prIds,err:=getUserByUsername(username)
 	if err!=nil{
 		return "",[]string{},err
 	}
@@ -434,7 +434,7 @@ func loginAsUser(username string,password string )(string,error){
 
 }
 
-func getUserByUsename(username string)(string,[]string,error){
+func getUserByUsername(username string)(string,[]string,error){
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s%s",os.Getenv("FIND_USER_URL"),username), nil)
 	if err != nil {
 		return "",[]string{}, err
@@ -466,6 +466,39 @@ func getUserByUsename(username string)(string,[]string,error){
 		return "",[]string{}, errors.New("user not found")
 	}
 	return dt.Data[0].Id,dt.Data[0].PrincipalIds, nil
+
+}
+
+func getUserById(userId string)(RespDataUserByUserId,error){
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s%s",os.Getenv("GET_USER_BY_ID"),userId), nil)
+	if err != nil {
+		return RespDataUserByUserId{}, err
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("RANCHER_TOKEN")))
+
+	client := &http.Client{}
+
+	resp, err := client.Do(req)
+
+	if err != nil {
+		return RespDataUserByUserId{}, err
+	}
+
+	defer resp.Body.Close()
+
+	// parse response body
+	dt := RespDataUserByUserId{}
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return RespDataUserByUserId{}, err
+	}
+	err = json.Unmarshal(body, &dt)
+	if err != nil {
+		return RespDataUserByUserId{}, err
+	}
+
+	return dt, nil
 
 }
 
@@ -513,7 +546,7 @@ func FindUser(username string)(RespDataUser,error){
 
 		// get namespace of project
 		if len(pr)>0 {
-			rs,err:=GetNamespaceByAnnotation(pr)
+			rs,prId,err:=GetNamespaceByAnnotation(pr)
 			if err != nil {
 				return RespDataUser{}, err
 			}
@@ -523,12 +556,14 @@ func FindUser(username string)(RespDataUser,error){
 				Id: dt.Data[0].Id,
 				Token: token,
 				Namespace: rs,
+				ProjectId: prId,
 			},nil
 		}else{
 			return RespDataUser{
 				Id: dt.Data[0].Id,
 				Token: token,
 				Namespace: "",
+				ProjectId: "",
 			},nil
 		}
 
@@ -636,4 +671,51 @@ func getProjectsOfUser(userId string,principalIds []string) ([]string, error) {
 	}
 
 	return []string{}, nil
+}
+
+func ListTeamMembers(projectId string)([]RespDataUserByUserId,error){
+	req,err := http.NewRequest("GET", fmt.Sprintf("%s%s",os.Getenv("GET_PROJECT_MEMBERS_URL"),projectId), nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("RANCHER_TOKEN")))
+
+	client := &http.Client{}
+
+	resp, err := client.Do(req)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	dt:=RespDataTeamMembers{}
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	err = json.Unmarshal(body, &dt)
+	if err != nil {
+		return nil, err
+	}
+	var res []RespDataUserByUserId
+	if len(dt.Data) > 0 {
+		// loop through all the members, get their userId and get their names
+		for _,user := range dt.Data {
+			d,err:=getUserById(strings.Split(user.UserId,"/")[0])
+			if err != nil {
+				continue
+			}else{
+				if(d.Type != "error"){
+					res = append(res,d)
+				}
+			}
+		}
+	}
+
+	return res, nil
+	
 }

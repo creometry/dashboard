@@ -43,6 +43,7 @@ type RespDataCreateProjectAndRepo struct {
 	User_token string `json:"user_token"`
 	User_id string `json:"rancher_user_id"`
 	Namespace string `json:"namespace"`
+	ProjectId string `json:"project_id"`
 }
 
 type RespDataRoleBinding struct {
@@ -82,6 +83,7 @@ type RespDataUser struct {
 	Id string `json:"id"`
 	Token string `json:"token"`
 	PrincipalIds []string `json:"principalIds"`
+	ProjectId string `json:"projectId"`
 }
 
 type UserData struct {
@@ -116,4 +118,19 @@ type FindUserData struct {
 type Data struct {
 	Id string `json:"id"`
 	PrincipalIds []string `json:"principalIds"`
+}
+
+type RespDataUserByUserId struct {
+	Name string `json:"name"`
+	Username string `json:"username"`
+	Id string `json:"id"`
+	Type string `json:"type"`
+}
+
+type RespDataTeamMembers struct {
+	Data []TeamMemberData `json:"data"`
+}
+
+type TeamMemberData struct {
+	UserId string `json:"userId"`
 }

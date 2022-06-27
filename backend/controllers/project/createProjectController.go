@@ -78,3 +78,42 @@ func FindUserAndLoginOrCreate(c *fiber.Ctx)error{
 		"namespace": data.Namespace,
 	})
 }
+
+func ListTeamMembers(c *fiber.Ctx)error{
+	projectId:= c.Params("projectId")
+	if projectId == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "projectId is required",
+		})
+	}
+	data, err := project.ListTeamMembers(projectId)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+	return c.JSON(fiber.Map{
+		"members": data,
+	})
+}
+
+func AddTeamMember(c *fiber.Ctx)error{
+	projectId:= c.Params("projectId")
+	userId:= c.Params("userId")
+
+	if projectId == "" || userId == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "projectId and userId are required",
+		})
+	}
+	data, err := project.AddUserToProject(userId,[]string{""},projectId)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+	
+	return c.JSON(fiber.Map{
+		"data": data,
+	})
+}
