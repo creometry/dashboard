@@ -43,7 +43,7 @@ type RespDataCreateProjectAndRepo struct {
 	User_token string `json:"user_token"`
 	User_id string `json:"rancher_user_id"`
 	Namespace string `json:"namespace"`
-	ProjectId string `json:"project_id"`
+	ProjectId string `json:"projectId"`
 }
 
 type RespDataRoleBinding struct {

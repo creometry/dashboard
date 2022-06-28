@@ -1,6 +1,9 @@
 package controllers
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/Creometry/dashboard/resource/project"
 	"github.com/gofiber/fiber/v2"
 )
@@ -30,6 +33,7 @@ func CreateProject(c *fiber.Ctx) error {
 		"token": data.User_token,
 		"namespace":  data.Namespace,
 		"rancher_user_id": data.User_id,
+		"projectId": data.ProjectId,
 	})
 }
 func GenerateKubeConfig (c *fiber.Ctx)error{
@@ -76,6 +80,7 @@ func FindUserAndLoginOrCreate(c *fiber.Ctx)error{
 		"user_token": data.Token,
 		"user_id": data.Id,
 		"namespace": data.Namespace,
+		"projectId":data.ProjectId,
 	})
 }
 
@@ -86,7 +91,7 @@ func ListTeamMembers(c *fiber.Ctx)error{
 			"error": "projectId is required",
 		})
 	}
-	data, err := project.ListTeamMembers(projectId)
+	data, err := project.ListTeamMembers(fmt.Sprintf("%s:%s",projectId,os.Getenv("CLUSTER_ID")))
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),

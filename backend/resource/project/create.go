@@ -530,7 +530,6 @@ func FindUser(username string)(RespDataUser,error){
 		return RespDataUser{}, err
 	}
 
-	log.Println(dt)
 	// if user exists, login and return token
 	if len(dt.Data) > 0 {
 		token,err := loginAsUser(username, "testtesttest")
@@ -552,11 +551,12 @@ func FindUser(username string)(RespDataUser,error){
 			}
 			
 			log.Printf("rs: %s",rs)
+			log.Printf("prId: %s",prId)
 			return RespDataUser{
 				Id: dt.Data[0].Id,
 				Token: token,
 				Namespace: rs,
-				ProjectId: prId,
+				ProjectId: strings.Split(prId,":")[1],
 			},nil
 		}else{
 			return RespDataUser{

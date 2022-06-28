@@ -456,6 +456,14 @@ export const Sidebar = () => {
                     </Link>
                 </div>
 
+                <div className="ml-1 mt-1">
+                    <Link to="/accesscontrol">
+                        <div className="p-2 w-full rounded-md hover:bg-creo hover:text-gray-100 cursor-pointer">
+                            Access control
+                        </div>
+                    </Link>
+                </div>
+
             </ul>
         </div>
     )
