@@ -345,6 +345,7 @@ func AddUserToProject(userId string,principalIds []string,projectId string) (Res
 	// parse response body
 	dt:= RespDataRoleBinding{}
 	body, err := ioutil.ReadAll(resp.Body)
+	log.Print(string(body))
 	if err != nil {
 		return RespDataRoleBinding{}, err
 	}
@@ -359,7 +360,7 @@ func AddUserToProject(userId string,principalIds []string,projectId string) (Res
 
 func createUser(username string)(string,[]string,error){
 	// should check if user exists before creating (TODO)
-	userId,prIds,err:=getUserByUsername(username)
+	userId,prIds,err:=GetUserByUsername(username)
 	if err!=nil{
 		return "",[]string{},err
 	}
@@ -434,7 +435,7 @@ func loginAsUser(username string,password string )(string,error){
 
 }
 
-func getUserByUsername(username string)(string,[]string,error){
+func GetUserByUsername(username string)(string,[]string,error){
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s%s",os.Getenv("FIND_USER_URL"),username), nil)
 	if err != nil {
 		return "",[]string{}, err

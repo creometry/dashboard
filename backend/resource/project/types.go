@@ -50,6 +50,7 @@ type RespDataRoleBinding struct {
 	RoleTemplateId string `json:"roleTemplateId"`
 	Name           string `json:"name"`
 	Type           string `json:"type"`
+	Code 		 string `json:"code"`
 }
 
 type RespDataCreateUser	struct {

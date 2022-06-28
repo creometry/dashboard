@@ -104,11 +104,22 @@ func ListTeamMembers(c *fiber.Ctx)error{
 
 func AddTeamMember(c *fiber.Ctx)error{
 	projectId:= c.Params("projectId")
-	userId:= c.Params("userId")
+	username:= c.Params("userId")
 
-	if projectId == "" || userId == "" {
+	if projectId == "" || username == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "projectId and userId are required",
+			"error": "projectId and username are required",
+		})
+	}
+	userId,_,err:=project.GetUserByUsername(username)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+	if userId == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "user not found",
 		})
 	}
 	data, err := project.AddUserToProject(userId,[]string{""},projectId)
