@@ -37,7 +37,7 @@ func CreateExtensionsClient() {
 		log.Fatal(err)
 	}
 
-	clientset,err:=clientset.NewForConfig(config)
+	clientset, err := clientset.NewForConfig(config)
 
 	if err != nil {
 		log.Fatal(err)

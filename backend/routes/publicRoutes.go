@@ -11,7 +11,7 @@ import (
 func CreateRoutes(app *fiber.App) {
 
 	v1 := app.Group("/api/v1")
-	v1.Get("/github/exchange/:code",gh.GetAccessToken)
+	v1.Get("/github/exchange/:code", gh.GetAccessToken)
 	v1.Post("/project", pr.CreateProject)
 	v1.Get("/user/:username", pr.FindUserAndLoginOrCreate)
 	v1.Get("/team/:projectId", pr.ListTeamMembers)

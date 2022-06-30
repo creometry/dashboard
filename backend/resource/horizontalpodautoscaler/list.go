@@ -8,9 +8,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-
 func GetHorizontalPodAutoscalers(namespace string) ([]autoscaling.HorizontalPodAutoscaler, error) {
-	
+
 	horizontalPodAutoscalersClient := auth.MyClientSet.AutoscalingV1().HorizontalPodAutoscalers(namespace)
 
 	list, err := horizontalPodAutoscalersClient.List(context.TODO(), metav1.ListOptions{})
@@ -18,9 +17,9 @@ func GetHorizontalPodAutoscalers(namespace string) ([]autoscaling.HorizontalPodA
 }
 
 func GetHorizontalPodAutoscaler(namespace string, name string) (autoscaling.HorizontalPodAutoscaler, error) {
-	
+
 	horizontalPodAutoscalersClient := auth.MyClientSet.AutoscalingV1().HorizontalPodAutoscalers(namespace)
 
-	hpo,err:=horizontalPodAutoscalersClient.Get(context.TODO(), name, metav1.GetOptions{})
+	hpo, err := horizontalPodAutoscalersClient.Get(context.TODO(), name, metav1.GetOptions{})
 	return *hpo, err
 }
