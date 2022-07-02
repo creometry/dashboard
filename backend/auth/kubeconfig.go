@@ -11,8 +11,24 @@ import (
 )
 
 var MyClientSet *kubernetes.Clientset
+var MyInClusterClientSet *kubernetes.Clientset
 var MyExtensionsClientSet *clientset.Clientset
 var Config *rest.Config
+
+
+func CreateInClusterClient() {
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		log.Fatal(err)
+	}
+	MyInClusterClientSet = clientset
+}
+
 
 func CreateKubernetesClient() {
 	kubeconfig := flag.String("kubeconfig", "./kubeconfig.yaml", "")
