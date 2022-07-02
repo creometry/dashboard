@@ -15,7 +15,7 @@ func main() {
 	// Create the client set
 	// this is just for local development
 	// in production, create a restCLient without the use os a kubeconfig
-	// file. This is because the kubeconfig file is not available in the 
+	// file. This is because the kubeconfig file is not available in the
 	// container. Will use a service account instead.
 	// (https://github.com/kubernetes/client-go/tree/master/examples/in-cluster-client-configuration)
 	auth.CreateKubernetesClient()

@@ -15,7 +15,6 @@ var MyInClusterClientSet *kubernetes.Clientset
 var MyExtensionsClientSet *clientset.Clientset
 var Config *rest.Config
 
-
 func CreateInClusterClient() {
 	config, err := rest.InClusterConfig()
 	if err != nil {
@@ -28,7 +27,6 @@ func CreateInClusterClient() {
 	}
 	MyInClusterClientSet = clientset
 }
-
 
 func CreateKubernetesClient() {
 	kubeconfig := flag.String("kubeconfig", "./kubeconfig.yaml", "")

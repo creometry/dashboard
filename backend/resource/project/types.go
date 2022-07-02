@@ -92,7 +92,6 @@ type UserData struct {
 }
 
 type RespDataNs struct {
-	// Data is a map of interface{} to interface{}
 	Data []NsData `json:"data"`
 }
 
