@@ -14,6 +14,7 @@ import { ServiceList } from "./components/resources/ServiceList";
 import { EndpointList } from "./components/resources/EndpointList";
 import { StatefulSetList } from "./components/resources/StatefulSetList";
 import { EventList } from "./components/resources/EventList";
+import { AccessControl } from "./components/resources/AccessControl";
 import { NotFound } from "./components/NotFound";
 import { PaymentError } from "./components/PaymentError";
 import { Redirect } from "./components/Redirect";
@@ -32,6 +33,14 @@ export default function App() {
           element={
             <Layout>
               <PodList />
+            </Layout>
+          }
+        />
+        <Route
+          path="/accesscontrol"
+          element={
+            <Layout>
+              <AccessControl />
             </Layout>
           }
         />

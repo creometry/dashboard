@@ -31,4 +31,9 @@ export const usePopup = create((set, get) => ({
   setIsOpen: (isOpen) => set((state) => ({ isOpen })),
 }));
 
+export const useAddMemberPopup = create((set, get) => ({
+  isPopupOpen: false,
+  setIsPopupOpen: (isPopupOpen) => set((state) => ({ isPopupOpen })),
+}));
+
 export default useStore;

@@ -1,13 +1,15 @@
 import { Navbar } from "./Navbar";
 import { Sidebar } from "./Sidebar";
 import { PlansPopup } from "./PlansPopup";
-import useStore, { usePopup } from "../zustand/state";
+import { AddMemberPopup } from "./AddMemberPopup";
+import useStore, { usePopup, useAddMemberPopup } from "../zustand/state";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 
 export const Layout = ({ children }) => {
     const { user } = useStore();
-    const { isOpen, setIsOpen } = usePopup();
+    const { isOpen } = usePopup();
+    const { isPopupOpen } = useAddMemberPopup();
     const navigate = useNavigate()
 
     useEffect(() => {
@@ -21,6 +23,9 @@ export const Layout = ({ children }) => {
         <div className="bg-zinc-900 w-full flex h-screen">
             {
                 isOpen === true && <PlansPopup />
+            }
+            {
+                isPopupOpen === true && <AddMemberPopup />
             }
             <Sidebar />
             <div className="lg:w-5/6 md:w-4/5 xs:w-3/4 w-full">

@@ -22,7 +22,6 @@ func getCustomResourceDefinitionGroupVersion(crd *apiextensions.CustomResourceDe
 	}
 }
 
-
 func NewRESTClient(config *rest.Config, crd *apiextensions.CustomResourceDefinition) (*rest.RESTClient, error) {
 	groupVersion := getCustomResourceDefinitionGroupVersion(crd)
 	scheme := runtime.NewScheme()

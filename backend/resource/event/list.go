@@ -8,7 +8,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-
 func GetEvents(namespace string) ([]v1.Event, error) {
 
 	eventsClient := auth.MyClientSet.CoreV1().Events(namespace)

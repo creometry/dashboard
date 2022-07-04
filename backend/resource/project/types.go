@@ -6,11 +6,11 @@ import (
 
 type ReqData struct {
 	UsrProjectName string `json:"projectName"`
-	Username   string `json:"username"`
-	Plan 		 string `json:"plan"`
-	GitRepoName string `json:"gitRepoName"`
-	GitRepoBranch string `json:"gitRepoBranch"`
-	GitRepoUrl string `json:"gitRepoUrl"`
+	Username       string `json:"username"`
+	Plan           string `json:"plan"`
+	GitRepoName    string `json:"gitRepoName"`
+	GitRepoBranch  string `json:"gitRepoBranch"`
+	GitRepoUrl     string `json:"gitRepoUrl"`
 }
 
 func (r *ReqData) Validate() error {
@@ -41,36 +41,38 @@ type RespData struct {
 
 type RespDataCreateProjectAndRepo struct {
 	User_token string `json:"user_token"`
-	User_id string `json:"rancher_user_id"`
-	Namespace string `json:"namespace"`
+	User_id    string `json:"rancher_user_id"`
+	Namespace  string `json:"namespace"`
+	ProjectId  string `json:"projectId"`
 }
 
 type RespDataRoleBinding struct {
 	RoleTemplateId string `json:"roleTemplateId"`
 	Name           string `json:"name"`
 	Type           string `json:"type"`
+	Code           string `json:"code"`
 }
 
-type RespDataCreateUser	struct {
-	Id string `json:"id"`
+type RespDataCreateUser struct {
+	Id           string   `json:"id"`
 	PrincipalIds []string `json:"principalIds"`
 }
 
 type Kubeconfig struct {
 	BaseType string `json:"baseType"`
-	Config 	string `json:"config"`
-	Type 	string `json:"type"`
+	Config   string `json:"config"`
+	Type     string `json:"type"`
 }
 
 type RespDataLogin struct {
 	AuthProvider string `json:"authProvider"`
-	Token 		 string `json:"token"`
-	Name 		 string `json:"name"`
-	Id 			 string `json:"id"`
+	Token        string `json:"token"`
+	Name         string `json:"name"`
+	Id           string `json:"id"`
 }
 
 type RespDataCreateGitRepo struct {
-	Id 			 string `json:"id"`
+	Id string `json:"id"`
 }
 
 type ReqDataKubeconfig struct {
@@ -78,10 +80,11 @@ type ReqDataKubeconfig struct {
 }
 
 type RespDataUser struct {
-	Namespace string `json:"namespace"`
-	Id string `json:"id"`
-	Token string `json:"token"`
+	Namespace    string   `json:"namespace"`
+	Id           string   `json:"id"`
+	Token        string   `json:"token"`
 	PrincipalIds []string `json:"principalIds"`
+	ProjectId    string   `json:"projectId"`
 }
 
 type UserData struct {
@@ -89,12 +92,11 @@ type UserData struct {
 }
 
 type RespDataNs struct {
-	// Data is a map of interface{} to interface{}
 	Data []NsData `json:"data"`
 }
 
-type NsData struct{
-	Id string `json:"id"`
+type NsData struct {
+	Id       string        `json:"id"`
 	Metadata MetadDataData `json:"metadata"`
 }
 type MetadDataData struct {
@@ -114,6 +116,21 @@ type FindUserData struct {
 }
 
 type Data struct {
-	Id string `json:"id"`
+	Id           string   `json:"id"`
 	PrincipalIds []string `json:"principalIds"`
+}
+
+type RespDataUserByUserId struct {
+	Name     string `json:"name"`
+	Username string `json:"username"`
+	Id       string `json:"id"`
+	Type     string `json:"type"`
+}
+
+type RespDataTeamMembers struct {
+	Data []TeamMemberData `json:"data"`
+}
+
+type TeamMemberData struct {
+	UserId string `json:"userId"`
 }

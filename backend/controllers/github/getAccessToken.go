@@ -11,7 +11,7 @@ import (
 )
 
 func GetAccessToken(c *fiber.Ctx) error {
-	ctx:=context.Background()
+	ctx := context.Background()
 	// get request params
 	code := c.Params("code")
 	// check if the request params are valid
@@ -28,12 +28,12 @@ func GetAccessToken(c *fiber.Ctx) error {
 	}
 	// get access token
 	token, err := conf.Exchange(ctx, code)
-		if err != nil {
-			log.Println("errr")
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error": "error exchanging code for token",
-			})
-		}
+	if err != nil {
+		log.Println("errr")
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "error exchanging code for token",
+		})
+	}
 	return c.JSON(fiber.Map{
 		"access_token": token.AccessToken,
 	})

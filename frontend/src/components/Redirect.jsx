@@ -50,6 +50,7 @@ export const Redirect = () => {
                         console.log(resp.data)
                         localStorage.setItem('namespace', resp.data.namespace)
                         localStorage.setItem('rancher_user_id', resp.data.user_id)
+                        localStorage.setItem('project_id', resp.data.projectId)
                         setCookie('rancher_token', resp.data.user_token, { path: '/' })
                         navigate('/')
                     }
@@ -130,6 +131,7 @@ export const Redirect = () => {
                         console.log(resp.data)
                         localStorage.setItem('namespace', resp.data.namespace)
                         localStorage.setItem('rancher_user_id', resp.data.rancher_user_id)
+                        localStorage.setItem('project_id', resp.data.projectId)
                         setCookie('rancher_token', resp.data.token, { path: '/' })
                         navigate('/')
                     }

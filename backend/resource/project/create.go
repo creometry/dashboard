@@ -20,26 +20,26 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// Exportable functions
+
 func CreateProject(req ReqData) (data RespDataCreateProjectAndRepo, err error) {
-	// decode the id_token (JWT)
-	
 	// create gitRepo
-	repoName,err:= createGitRepo(req.GitRepoName,req.GitRepoUrl,req.GitRepoBranch)
+	repoName, err := createGitRepo(req.GitRepoName, req.GitRepoUrl, req.GitRepoBranch)
 	if err != nil {
 		return RespDataCreateProjectAndRepo{}, err
 	}
-	fmt.Printf("Created repo : %s",repoName)
+	fmt.Printf("Created repo : %s", repoName)
 
 	// TODO: should check if the user has already created a project
 
 	// create rancher project
-	projectId, err := createRancherProject(req.UsrProjectName,req.Plan)
+	projectId, err := createRancherProject(req.UsrProjectName, req.Plan)
 	if err != nil {
 		return RespDataCreateProjectAndRepo{}, err
 	}
 
 	// create user in rancher and get user id
-	userId,principalIds, err := createUser(req.Username)
+	userId, principalIds, err := createUser(req.Username)
 
 	if err != nil {
 		return RespDataCreateProjectAndRepo{}, err
@@ -50,7 +50,7 @@ func CreateProject(req ReqData) (data RespDataCreateProjectAndRepo, err error) {
 	}*/
 
 	// add user to project
-	_, err = addUserToProject(userId, principalIds,projectId)
+	_, err = AddUserToProject(userId, principalIds, projectId)
 	if err != nil {
 		return RespDataCreateProjectAndRepo{}, err
 	}
@@ -75,10 +75,9 @@ func CreateProject(req ReqData) (data RespDataCreateProjectAndRepo, err error) {
 
 	nsName := strings.ToLower(req.UsrProjectName) + "-" + strings.ToLower(rand)
 
-
 	ns := &v1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: 	nsName,
+			Name: nsName,
 			Annotations: map[string]string{
 				"field.cattle.io/projectId": projectId,
 			},
@@ -94,29 +93,29 @@ func CreateProject(req ReqData) (data RespDataCreateProjectAndRepo, err error) {
 	}
 	log.Println("Created Namespace:", newNs.Name)
 
-
 	// login as user to get token
 	token, err := loginAsUser(req.Username, "testtesttest")
 
 	if err != nil {
 		return RespDataCreateProjectAndRepo{}, err
-	} 
+	}
 
-	resp :=RespDataCreateProjectAndRepo{
+	resp := RespDataCreateProjectAndRepo{
 		User_token: token,
-		User_id: userId,
-		Namespace: newNs.Name,
+		User_id:    userId,
+		Namespace:  newNs.Name,
+		ProjectId:  projectId,
 	}
 	return resp, nil
 
 }
 
-func GetNamespaceByAnnotation(annotations []string)(string,error){
+func GetNamespaceByAnnotation(annotations []string) (string, string, error) {
 
 	// http get request to get the namespace list with http client
-	req, err := http.NewRequest("GET",os.Getenv("NAMESPACE_URL"), nil)
+	req, err := http.NewRequest("GET", os.Getenv("NAMESPACE_URL"), nil)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("RANCHER_TOKEN")))
@@ -126,7 +125,7 @@ func GetNamespaceByAnnotation(annotations []string)(string,error){
 	resp, err := client.Do(req)
 
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	defer resp.Body.Close()
 
@@ -134,31 +133,261 @@ func GetNamespaceByAnnotation(annotations []string)(string,error){
 	dt := RespDataNs{}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	err = json.Unmarshal(body, &dt)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	for _, annotation := range annotations {
-	newAnnotation := fmt.Sprintf("%s:%s",os.Getenv("CLUSTER_ID"),strings.Split(annotation,":")[0]) 
-	for _, ns := range dt.Data {
-		if ns.Metadata.Annotations["field.cattle.io/projectId"] == newAnnotation{
-			return ns.Id,nil
+		newAnnotation := fmt.Sprintf("%s:%s", os.Getenv("CLUSTER_ID"), strings.Split(annotation, ":")[0])
+		for _, ns := range dt.Data {
+			if ns.Metadata.Annotations["field.cattle.io/projectId"] == newAnnotation {
+				return ns.Id, newAnnotation, nil
+			}
 		}
 	}
-}
-	
-	return "", nil
-	
+
+	return "", "", nil
+
 }
 
-func createRancherProject(usrProjectName string,plan string) (string, error) {
-	resourceQuota:= genResourceQuotaFromPlan(plan)
+func GetKubeConfig(token string) (string, error) {
+	req, err := http.NewRequest("POST", fmt.Sprintf("https://tn.cloud.creometry.com/v3/clusters/%s?action=generateKubeconfig", os.Getenv("CLUSTER_ID")), nil)
+	if err != nil {
+		return "", err
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+
+	client := &http.Client{}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+
+	defer resp.Body.Close()
+	// parse response body
+	dt := Kubeconfig{}
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = json.Unmarshal(body, &dt)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return dt.Config, nil
+}
+
+func AddUserToProject(userId string, principalIds []string, projectId string) (RespDataRoleBinding, error) {
+
+	req, err := http.NewRequest("POST", os.Getenv("ADD_USER_TO_PROJECT_URL"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"userId":"%s","projectId":"%s","roleTemplateId":"project-member"}`, userId, projectId))))
+	if err != nil {
+		return RespDataRoleBinding{}, err
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("RANCHER_TOKEN")))
+
+	client := &http.Client{}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return RespDataRoleBinding{}, err
+	}
+
+	defer resp.Body.Close()
+	// parse response body
+	dt := RespDataRoleBinding{}
+	body, err := ioutil.ReadAll(resp.Body)
+	log.Print(string(body))
+	if err != nil {
+		return RespDataRoleBinding{}, err
+	}
+	err = json.Unmarshal(body, &dt)
+	if err != nil {
+		return RespDataRoleBinding{}, err
+	}
+	return dt, nil
+
+}
+
+func GetUserByUsername(username string) (string, []string, error) {
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s%s", os.Getenv("FIND_USER_URL"), username), nil)
+	if err != nil {
+		return "", []string{}, err
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("RANCHER_TOKEN")))
+
+	client := &http.Client{}
+
+	resp, err := client.Do(req)
+
+	if err != nil {
+		return "", []string{}, err
+	}
+
+	defer resp.Body.Close()
+
+	dt := FindUserData{}
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", []string{}, err
+	}
+	err = json.Unmarshal(body, &dt)
+	if err != nil {
+		return "", []string{}, err
+	}
+
+	if len(dt.Data) == 0 {
+		return "", []string{}, errors.New("user not found")
+	}
+	return dt.Data[0].Id, dt.Data[0].PrincipalIds, nil
+
+}
+
+func ListTeamMembers(projectId string) ([]RespDataUserByUserId, error) {
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s%s", os.Getenv("GET_PROJECT_MEMBERS_URL"), projectId), nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("RANCHER_TOKEN")))
+
+	client := &http.Client{}
+
+	resp, err := client.Do(req)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	dt := RespDataTeamMembers{}
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	err = json.Unmarshal(body, &dt)
+	if err != nil {
+		return nil, err
+	}
+	var res []RespDataUserByUserId
+	if len(dt.Data) > 0 {
+		// loop through all the members, get their userId and get their names
+		for _, user := range dt.Data {
+			d, err := getUserById(strings.Split(user.UserId, "/")[0])
+			if err != nil {
+				continue
+			} else {
+				if d.Type != "error" {
+					res = append(res, d)
+				}
+			}
+		}
+	}
+
+	return res, nil
+
+}
+
+func FindUser(username string) (RespDataUser, error) {
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s%s", os.Getenv("FIND_USER_URL"), username), nil)
+	if err != nil {
+		return RespDataUser{}, err
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("RANCHER_TOKEN")))
+
+	client := &http.Client{}
+
+	resp, err := client.Do(req)
+
+	if err != nil {
+		return RespDataUser{}, err
+	}
+	defer resp.Body.Close()
+
+	// parse response body
+	dt := UserData{}
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return RespDataUser{}, err
+	}
+	err = json.Unmarshal(body, &dt)
+	if err != nil {
+		return RespDataUser{}, err
+	}
+
+	// if user exists, login and return token
+	if len(dt.Data) > 0 {
+		token, err := loginAsUser(username, "testtesttest")
+		if err != nil {
+			return RespDataUser{}, err
+		}
+
+		// get his projectName
+		pr, err := getProjectsOfUser(dt.Data[0].Id, dt.Data[0].PrincipalIds)
+		if err != nil {
+			return RespDataUser{}, err
+		}
+
+		// get namespace of project
+		if len(pr) > 0 {
+			rs, prId, err := GetNamespaceByAnnotation(pr)
+			if err != nil {
+				return RespDataUser{}, err
+			}
+
+			log.Printf("rs: %s", rs)
+			log.Printf("prId: %s", prId)
+			return RespDataUser{
+				Id:        dt.Data[0].Id,
+				Token:     token,
+				Namespace: rs,
+				ProjectId: strings.Split(prId, ":")[1],
+			}, nil
+		} else {
+			return RespDataUser{
+				Id:        dt.Data[0].Id,
+				Token:     token,
+				Namespace: "",
+				ProjectId: "",
+			}, nil
+		}
+
+	}
+
+	// if user does not exist, create user and return token
+	id, _, err := createUser(username)
+	if err != nil {
+		return RespDataUser{}, err
+	}
+
+	token, err := loginAsUser(username, "testtesttest")
+	if err != nil {
+		return RespDataUser{}, err
+	}
+	return RespDataUser{
+		Id:        id,
+		Token:     token,
+		Namespace: "",
+	}, nil
+}
+
+// Local functions
+
+func createRancherProject(usrProjectName string, plan string) (string, error) {
+	resourceQuota := genResourceQuotaFromPlan(plan)
 	if resourceQuota == "nil" {
 		return "", fmt.Errorf("invalid plan")
 	}
-	req, err := http.NewRequest("POST", os.Getenv("CREATE_PROJECT_URL"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"name":"%s","clusterId":"%s",%s}`, usrProjectName, os.Getenv("CLUSTER_ID"),resourceQuota))))
+	req, err := http.NewRequest("POST", os.Getenv("CREATE_PROJECT_URL"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"name":"%s","clusterId":"%s",%s}`, usrProjectName, os.Getenv("CLUSTER_ID"), resourceQuota))))
 	if err != nil {
 		return "", err
 	}
@@ -186,7 +415,6 @@ func createRancherProject(usrProjectName string,plan string) (string, error) {
 
 	return dt.ProjectId, nil
 }
-
 
 func genResourceQuotaFromPlan(plan string) string {
 	switch plan {
@@ -293,117 +521,53 @@ func genResourceQuotaFromPlan(plan string) string {
 	return "nil"
 }
 
-func GetKubeConfig(token string)(string, error) {
-	req, err := http.NewRequest("POST", fmt.Sprintf("https://tn.cloud.creometry.com/v3/clusters/%s?action=generateKubeconfig",os.Getenv("CLUSTER_ID")), nil)
-	if err != nil {
-		return "", err
-	}
-
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
-
-	client := &http.Client{}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", err
-	}
-
-	defer resp.Body.Close()
-	// parse response body
-	dt := Kubeconfig{}
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = json.Unmarshal(body, &dt)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return dt.Config, nil
-}
-
-
-func addUserToProject(userId string,principalIds []string,projectId string) (RespDataRoleBinding, error) {
-
-	req, err := http.NewRequest("POST", os.Getenv("ADD_USER_TO_PROJECT_URL"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"userId":"%s","projectId":"%s","roleTemplateId":"project-member"}`, userId,projectId))))
-	if err != nil {
-		return RespDataRoleBinding{}, err
-	}
-
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("RANCHER_TOKEN")))
-
-	client := &http.Client{}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return RespDataRoleBinding{}, err
-	}
-
-	defer resp.Body.Close()
-	// parse response body
-	dt:= RespDataRoleBinding{}
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return RespDataRoleBinding{}, err
-	}
-	err = json.Unmarshal(body, &dt)
-	if err != nil {
-		return RespDataRoleBinding{}, err
-	}
-	return dt, nil
-
-}
-
-//func addClusterRoleBinding
-
-func createUser(username string)(string,[]string,error){
+func createUser(username string) (string, []string, error) {
 	// should check if user exists before creating (TODO)
-	userId,prIds,err:=getUserByUsename(username)
-	if err!=nil{
-		return "",[]string{},err
-	}
-
-	if userId!=""{
-		return userId,prIds,nil
-	}else{
-	req, err := http.NewRequest("POST", os.Getenv("CREATE_USER_URL"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"username":"%s","mustChangePassword": false,"password": "testtesttest","principalIds": [ ]}`, username))))
+	userId, prIds, err := GetUserByUsername(username)
 	if err != nil {
-		return "",[]string{}, err
+		return "", []string{}, err
 	}
 
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("RANCHER_TOKEN")))
+	if userId != "" {
+		return userId, prIds, nil
+	} else {
+		req, err := http.NewRequest("POST", os.Getenv("CREATE_USER_URL"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"username":"%s","mustChangePassword": false,"password": "testtesttest","principalIds": [ ]}`, username))))
+		if err != nil {
+			return "", []string{}, err
+		}
 
-	client := &http.Client{}
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("RANCHER_TOKEN")))
 
-	resp, err := client.Do(req)
+		client := &http.Client{}
 
-	if err != nil {
-		return "",[]string{}, err
+		resp, err := client.Do(req)
+
+		if err != nil {
+			return "", []string{}, err
+		}
+
+		defer resp.Body.Close()
+
+		// parse response body
+		dt := RespDataCreateUser{}
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return "", []string{}, err
+		}
+		err = json.Unmarshal(body, &dt)
+		if err != nil {
+			return "", []string{}, err
+		}
+		log.Println("---------------")
+		log.Println(dt)
+
+		return dt.Id, dt.PrincipalIds, nil
 	}
-	
-	defer resp.Body.Close()
-	
-	// parse response body
-	dt:=RespDataCreateUser{}
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return "", []string{},err
-	}
-	err = json.Unmarshal(body, &dt)
-	if err != nil {
-		return "", []string{},err
-	}
-	log.Println("---------------")
-	log.Println(dt)
 
-	return dt.Id,dt.PrincipalIds, nil
 }
 
-}
-
-func loginAsUser(username string,password string )(string,error){
-	req, err := http.NewRequest("POST", os.Getenv("LOGIN_USER_URL"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"username":"%s","password":"%s"}`, username,password))))
+func loginAsUser(username string, password string) (string, error) {
+	req, err := http.NewRequest("POST", os.Getenv("LOGIN_USER_URL"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"username":"%s","password":"%s"}`, username, password))))
 	if err != nil {
 		return "", err
 	}
@@ -434,10 +598,10 @@ func loginAsUser(username string,password string )(string,error){
 
 }
 
-func getUserByUsename(username string)(string,[]string,error){
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s%s",os.Getenv("FIND_USER_URL"),username), nil)
+func getUserById(userId string) (RespDataUserByUserId, error) {
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s%s", os.Getenv("GET_USER_BY_ID"), userId), nil)
 	if err != nil {
-		return "",[]string{}, err
+		return RespDataUserByUserId{}, err
 	}
 
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("RANCHER_TOKEN")))
@@ -447,112 +611,28 @@ func getUserByUsename(username string)(string,[]string,error){
 	resp, err := client.Do(req)
 
 	if err != nil {
-		return "",[]string{}, err
+		return RespDataUserByUserId{}, err
 	}
 
-	defer resp.Body.Close()
-
-	dt := FindUserData{}
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return "",[]string{}, err
-	}
-	err = json.Unmarshal(body, &dt)
-	if err != nil {
-		return "",[]string{}, err
-	}
-
-	if (len(dt.Data) == 0) {
-		return "",[]string{}, errors.New("user not found")
-	}
-	return dt.Data[0].Id,dt.Data[0].PrincipalIds, nil
-
-}
-
-func FindUser(username string)(RespDataUser,error){
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s%s",os.Getenv("FIND_USER_URL"),username), nil)
-	if err != nil {
-		return RespDataUser{}, err
-	}
-
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("RANCHER_TOKEN")))
-
-	client := &http.Client{}
-
-	resp, err := client.Do(req)
-
-	if err != nil {
-		return RespDataUser{}, err
-	}
 	defer resp.Body.Close()
 
 	// parse response body
-	dt := UserData{}
+	dt := RespDataUserByUserId{}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return RespDataUser{}, err
+		return RespDataUserByUserId{}, err
 	}
 	err = json.Unmarshal(body, &dt)
 	if err != nil {
-		return RespDataUser{}, err
+		return RespDataUserByUserId{}, err
 	}
 
-	log.Println(dt)
-	// if user exists, login and return token
-	if len(dt.Data) > 0 {
-		token,err := loginAsUser(username, "testtesttest")
-		if err != nil {
-			return RespDataUser{}, err
-		}
+	return dt, nil
 
-		// get his projectName
-		pr,err:=getProjectsOfUser(dt.Data[0].Id,dt.Data[0].PrincipalIds)
-		if err != nil {
-			return RespDataUser{}, err
-		}
-
-		// get namespace of project
-		if len(pr)>0 {
-			rs,err:=GetNamespaceByAnnotation(pr)
-			if err != nil {
-				return RespDataUser{}, err
-			}
-			
-			log.Printf("rs: %s",rs)
-			return RespDataUser{
-				Id: dt.Data[0].Id,
-				Token: token,
-				Namespace: rs,
-			},nil
-		}else{
-			return RespDataUser{
-				Id: dt.Data[0].Id,
-				Token: token,
-				Namespace: "",
-			},nil
-		}
-
-	}
-
-	// if user does not exist, create user and return token
-	id,_,err:=createUser(username)
-	if err != nil {
-		return RespDataUser{}, err
-	}
-
-	token,err := loginAsUser(username, "testtesttest")
-	if err != nil {
-		return RespDataUser{}, err
-	}
-	return RespDataUser{
-		Id: id,
-		Token: token,
-		Namespace: "",
-	},nil
 }
 
-func createGitRepo(name string,url string,branch string)(string, error){
-	req, err := http.NewRequest("POST", fmt.Sprintf("https://tn.cloud.creometry.com/k8s/clusters/%s/v1/catalog.cattle.io.clusterrepos",os.Getenv("CLUSTER_ID")), bytes.NewBuffer([]byte(fmt.Sprintf(`{
+func createGitRepo(name string, url string, branch string) (string, error) {
+	req, err := http.NewRequest("POST", fmt.Sprintf("https://tn.cloud.creometry.com/k8s/clusters/%s/v1/catalog.cattle.io.clusterrepos", os.Getenv("CLUSTER_ID")), bytes.NewBuffer([]byte(fmt.Sprintf(`{
 		"type": "catalog.cattle.io.clusterrepo",
 		"metadata": {
 		  "name": "%s"
@@ -563,7 +643,7 @@ func createGitRepo(name string,url string,branch string)(string, error){
 		  "gitRepo": "%s",
 		  "gitBranch": "%s"
 		}
-	  }`,name,url,branch))))
+	  }`, name, url, branch))))
 
 	if err != nil {
 		return "", err
@@ -578,11 +658,11 @@ func createGitRepo(name string,url string,branch string)(string, error){
 	if err != nil {
 		return "", err
 	}
-	
+
 	defer resp.Body.Close()
-	
+
 	// parse response body
-	dt:=RespDataCreateGitRepo{}
+	dt := RespDataCreateGitRepo{}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
@@ -595,8 +675,8 @@ func createGitRepo(name string,url string,branch string)(string, error){
 	return dt.Id, nil
 }
 
-func getProjectsOfUser(userId string,principalIds []string) ([]string, error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s%s",os.Getenv("GET_USER_PROJECTS"),userId), nil)
+func getProjectsOfUser(userId string, principalIds []string) ([]string, error) {
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s%s", os.Getenv("GET_USER_PROJECTS"), userId), nil)
 	if err != nil {
 		return []string{}, err
 	}
@@ -627,9 +707,9 @@ func getProjectsOfUser(userId string,principalIds []string) ([]string, error) {
 
 	if len(dt.Data) > 0 {
 		// return all the ids
-		res:=[]string{}
-		for _,v := range dt.Data {
-			res = append(res,v.Id)
+		res := []string{}
+		for _, v := range dt.Data {
+			res = append(res, v.Id)
 		}
 		return res, nil
 
