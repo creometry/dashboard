@@ -38,19 +38,17 @@ func CreateProject(req ReqData) (data RespDataCreateProjectAndRepo, err error) {
 		return RespDataCreateProjectAndRepo{}, err
 	}
 
-	// create user in rancher and get user id
-	userId, principalIds, err := createUser(req.Username)
+	// // create user in rancher and get user id
+	// userId, principalIds, err := createUser(req.Username)
 
-	if err != nil {
-		return RespDataCreateProjectAndRepo{}, err
-	}
+	// if err != nil {
+	// 	return RespDataCreateProjectAndRepo{}, err
+	// }
 
-	/*if len(principalIds) == 0 {
-		return RespDataCreateProjectAndRepo{}, fmt.Errorf("user already exists")
-	}*/
+	
 
 	// add user to project
-	_, err = AddUserToProject(userId, principalIds, projectId)
+	_, err = AddUserToProject(req.UserId, projectId)
 	if err != nil {
 		return RespDataCreateProjectAndRepo{}, err
 	}
@@ -94,7 +92,7 @@ func CreateProject(req ReqData) (data RespDataCreateProjectAndRepo, err error) {
 	log.Println("Created Namespace:", newNs.Name)
 
 	// login as user to get token
-	token, err := loginAsUser(req.Username, "testtesttest")
+	token, err := loginAsUser(req.UserId, "testtesttest")
 
 	if err != nil {
 		return RespDataCreateProjectAndRepo{}, err
@@ -102,7 +100,6 @@ func CreateProject(req ReqData) (data RespDataCreateProjectAndRepo, err error) {
 
 	resp := RespDataCreateProjectAndRepo{
 		User_token: token,
-		User_id:    userId,
 		Namespace:  newNs.Name,
 		ProjectId:  projectId,
 	}
@@ -182,7 +179,7 @@ func GetKubeConfig(token string) (string, error) {
 	return dt.Config, nil
 }
 
-func AddUserToProject(userId string, principalIds []string, projectId string) (RespDataRoleBinding, error) {
+func AddUserToProject(userId string, projectId string) (RespDataRoleBinding, error) {
 
 	req, err := http.NewRequest("POST", os.Getenv("ADD_USER_TO_PROJECT_URL"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"userId":"%s","projectId":"%s","roleTemplateId":"project-member"}`, userId, projectId))))
 	if err != nil {

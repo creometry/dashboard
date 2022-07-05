@@ -32,7 +32,6 @@ func CreateProject(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{
 		"token":           data.User_token,
 		"namespace":       data.Namespace,
-		"rancher_user_id": data.User_id,
 		"projectId":       data.ProjectId,
 	})
 }
@@ -122,7 +121,7 @@ func AddTeamMember(c *fiber.Ctx) error {
 			"error": "user not found",
 		})
 	}
-	data, err := project.AddUserToProject(userId, []string{""}, projectId)
+	data, err := project.AddUserToProject(userId, projectId)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),

@@ -6,7 +6,7 @@ import (
 
 type ReqData struct {
 	UsrProjectName string `json:"projectName"`
-	Username       string `json:"username"`
+	UserId       string `json:"userId"`
 	Plan           string `json:"plan"`
 	GitRepoName    string `json:"gitRepoName"`
 	GitRepoBranch  string `json:"gitRepoBranch"`
@@ -20,8 +20,8 @@ func (r *ReqData) Validate() error {
 	if r.Plan == "" {
 		return fmt.Errorf("plan is required")
 	}
-	if r.Username == "" {
-		return fmt.Errorf("username is required")
+	if r.UserId == "" {
+		return fmt.Errorf("user id is required")
 	}
 	if r.GitRepoName == "" {
 		return fmt.Errorf("gitRepoName is required")
@@ -41,7 +41,6 @@ type RespData struct {
 
 type RespDataCreateProjectAndRepo struct {
 	User_token string `json:"user_token"`
-	User_id    string `json:"rancher_user_id"`
 	Namespace  string `json:"namespace"`
 	ProjectId  string `json:"projectId"`
 }
