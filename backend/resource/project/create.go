@@ -149,6 +149,12 @@ func GetNamespaceByAnnotation(annotations []string) (string, string, error) {
 
 }
 
+// TO DO : need to find an endpoint to authenticate user
+// with his github code (if user not found in rancher, will be created)
+func AuthFromCode(code string)(string,error){
+	return "",nil
+}
+
 func GetKubeConfig(token string) (string, error) {
 	req, err := http.NewRequest("POST", fmt.Sprintf("https://tn.cloud.creometry.com/v3/clusters/%s?action=generateKubeconfig", os.Getenv("CLUSTER_ID")), nil)
 	if err != nil {
