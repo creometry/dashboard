@@ -30,9 +30,9 @@ func CreateProject(c *fiber.Ctx) error {
 		})
 	}
 	return c.JSON(fiber.Map{
-		"token":           data.User_token,
-		"namespace":       data.Namespace,
-		"projectId":       data.ProjectId,
+		"token":     data.User_token,
+		"namespace": data.Namespace,
+		"projectId": data.ProjectId,
 	})
 }
 func GenerateKubeConfig(c *fiber.Ctx) error {

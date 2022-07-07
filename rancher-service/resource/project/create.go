@@ -22,22 +22,11 @@ func CreateProject(req ReqData) (data RespDataCreateProjectAndRepo, err error) {
 	}
 	fmt.Printf("Created repo : %s", repoName)
 
-	// TODO: should check if the user has already created a project
-
 	// create rancher project
 	projectId, err := createRancherProject(req.UsrProjectName, req.Plan)
 	if err != nil {
 		return RespDataCreateProjectAndRepo{}, err
 	}
-
-	// // create user in rancher and get user id
-	// userId, principalIds, err := createUser(req.Username)
-
-	// if err != nil {
-	// 	return RespDataCreateProjectAndRepo{}, err
-	// }
-
-	
 
 	// add user to project
 	_, err = AddUserToProject(req.UserId, projectId)
@@ -46,9 +35,11 @@ func CreateProject(req ReqData) (data RespDataCreateProjectAndRepo, err error) {
 	}
 
 	// make post request to resources-service/namespace and pass the project name and id to create a namespace in the specific project
+	nsName, err := createNamespace(req.UsrProjectName, projectId)
 
-	
-
+	if err != nil {
+		return RespDataCreateProjectAndRepo{}, err
+	}
 	// login as user to get token
 	token, err := loginAsUser(req.UserId, "testtesttest")
 
@@ -58,7 +49,7 @@ func CreateProject(req ReqData) (data RespDataCreateProjectAndRepo, err error) {
 
 	resp := RespDataCreateProjectAndRepo{
 		User_token: token,
-		Namespace:  "newNs.Name",
+		Namespace:  nsName,
 		ProjectId:  projectId,
 	}
 	return resp, nil
@@ -109,8 +100,8 @@ func GetNamespaceByAnnotation(annotations []string) (string, string, error) {
 
 // TO DO : need to find an endpoint to authenticate user
 // with his github code (if user not found in rancher, will be created)
-func AuthFromCode(code string)(string,error){
-	return "",nil
+func AuthFromCode(code string) (string, error) {
+	return "", nil
 }
 
 func GetKubeConfig(token string) (string, error) {
@@ -677,4 +668,46 @@ func getProjectsOfUser(userId string, principalIds []string) ([]string, error) {
 	}
 
 	return []string{}, nil
+}
+
+func createNamespace(projectName string, projectId string) (string, error) {
+
+	req, err := http.NewRequest("POST", os.Getenv("CREATE_NAMESPACE_URL"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"projectName":"%s","projectId":"%s"}`, projectName, projectId))))
+
+	if err != nil {
+		return "", err
+	}
+
+	client := &http.Client{}
+
+	resp, err := client.Do(req)
+
+	if err != nil {
+		return "", err
+	}
+
+	defer resp.Body.Close()
+
+	// parse response body
+
+	dt := CreateNsRespData{}
+
+	body, err := ioutil.ReadAll(resp.Body)
+
+	if err != nil {
+		return "", err
+	}
+
+	err = json.Unmarshal(body, &dt)
+
+	if err != nil {
+		return "", err
+	}
+
+	if dt.Error != "" {
+		return "", errors.New(dt.Error)
+	}
+
+	return dt.NsName, nil
+
 }

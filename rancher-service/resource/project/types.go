@@ -6,7 +6,7 @@ import (
 
 type ReqData struct {
 	UsrProjectName string `json:"projectName"`
-	UserId       string `json:"userId"`
+	UserId         string `json:"userId"`
 	Plan           string `json:"plan"`
 	GitRepoName    string `json:"gitRepoName"`
 	GitRepoBranch  string `json:"gitRepoBranch"`
@@ -33,6 +33,11 @@ func (r *ReqData) Validate() error {
 		r.GitRepoBranch = "master"
 	}
 	return nil
+}
+
+type CreateNsRespData struct {
+	Error  string `json:"error"`
+	NsName string `json:"ns_name"`
 }
 
 type RespData struct {
