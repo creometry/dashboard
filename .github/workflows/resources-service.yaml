@@ -22,8 +22,8 @@ jobs:
       - uses: mr-smithers-excellent/docker-build-push@v5
         name: Build & push Docker image
         with:
-          image: creometry/resources-service
-          tags: v1.0.0, latest
+          image: seifbarouni/resources-service
+          tags: latest
           dockerfile: resources-service/Dockerfile
           registry: docker.io
           directory: resources-service

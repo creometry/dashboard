@@ -11,7 +11,7 @@ import (
 
 func GetStatefulSets(namespace string) ([]appsv1.StatefulSet, error) {
 
-	statefulSetsClient := auth.MyClientSet.AppsV1().StatefulSets(namespace)
+	statefulSetsClient := auth.MyInClusterClientSet.AppsV1().StatefulSets(namespace)
 
 	list, err := statefulSetsClient.List(context.TODO(), metav1.ListOptions{})
 	return list.Items, err
@@ -20,7 +20,7 @@ func GetStatefulSets(namespace string) ([]appsv1.StatefulSet, error) {
 
 func GetStatefulSet(namespace string, statefulSetName string) (appsv1.StatefulSet, error) {
 
-	statefulSetsClient := auth.MyClientSet.AppsV1().StatefulSets(namespace)
+	statefulSetsClient := auth.MyInClusterClientSet.AppsV1().StatefulSets(namespace)
 
 	statefulSet, err := statefulSetsClient.Get(context.TODO(), statefulSetName, metav1.GetOptions{})
 	return *statefulSet, err

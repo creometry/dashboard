@@ -11,7 +11,7 @@ import (
 
 func GetPersistentVolumeClaims(namespace string) ([]v1.PersistentVolumeClaim, error) {
 
-	pvcClient := auth.MyClientSet.CoreV1().PersistentVolumeClaims(namespace)
+	pvcClient := auth.MyInClusterClientSet.CoreV1().PersistentVolumeClaims(namespace)
 
 	list, err := pvcClient.List(context.TODO(), metav1.ListOptions{})
 	return list.Items, err
@@ -20,7 +20,7 @@ func GetPersistentVolumeClaims(namespace string) ([]v1.PersistentVolumeClaim, er
 
 func GetPersistentVolumeClaim(namespace string, pvcName string) (v1.PersistentVolumeClaim, error) {
 
-	pvcClient := auth.MyClientSet.CoreV1().PersistentVolumeClaims(namespace)
+	pvcClient := auth.MyInClusterClientSet.CoreV1().PersistentVolumeClaims(namespace)
 
 	pvc, err := pvcClient.Get(context.TODO(), pvcName, metav1.GetOptions{})
 	return *pvc, err

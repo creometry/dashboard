@@ -13,8 +13,6 @@ FROM alpine:latest
 
 WORKDIR /app
 
-COPY ./kubeconfig.yaml /app/kubeconfig.yaml
-
 COPY --from=build /go/src/github.com/Creometry/resources-service/app /app
 
 EXPOSE 3002

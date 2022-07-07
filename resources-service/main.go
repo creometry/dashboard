@@ -10,8 +10,7 @@ import (
 )
 
 func main() {
-	auth.CreateKubernetesClient()
-	auth.CreateExtensionsClient()
+	auth.CreateInClusterClient()
 
 	app := fiber.New()
 

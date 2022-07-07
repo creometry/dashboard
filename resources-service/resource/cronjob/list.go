@@ -10,7 +10,7 @@ import (
 
 func GetCronJobs(namespace string) ([]batchv1.CronJob, error) {
 
-	cronJobsClient := auth.MyClientSet.BatchV1().CronJobs(namespace)
+	cronJobsClient := auth.MyInClusterClientSet.BatchV1().CronJobs(namespace)
 
 	list, err := cronJobsClient.List(context.TODO(), metav1.ListOptions{})
 	return list.Items, err
@@ -19,7 +19,7 @@ func GetCronJobs(namespace string) ([]batchv1.CronJob, error) {
 
 func GetCronJob(namespace string, cronJobName string) (batchv1.CronJob, error) {
 
-	cronJobsClient := auth.MyClientSet.BatchV1().CronJobs(namespace)
+	cronJobsClient := auth.MyInClusterClientSet.BatchV1().CronJobs(namespace)
 
 	cronJob, err := cronJobsClient.Get(context.TODO(), cronJobName, metav1.GetOptions{})
 	return *cronJob, err

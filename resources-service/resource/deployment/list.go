@@ -10,7 +10,7 @@ import (
 
 func GetDeployments(namespace string) ([]appsv1.Deployment, error) {
 
-	deploymentsClient := auth.MyClientSet.AppsV1().Deployments(namespace)
+	deploymentsClient := auth.MyInClusterClientSet.AppsV1().Deployments(namespace)
 
 	list, err := deploymentsClient.List(context.TODO(), metav1.ListOptions{})
 	return list.Items, err
@@ -19,7 +19,7 @@ func GetDeployments(namespace string) ([]appsv1.Deployment, error) {
 
 func GetDeployment(namespace string, deploymentName string) (appsv1.Deployment, error) {
 
-	deploymentsClient := auth.MyClientSet.AppsV1().Deployments(namespace)
+	deploymentsClient := auth.MyInClusterClientSet.AppsV1().Deployments(namespace)
 
 	deployment, err := deploymentsClient.Get(context.TODO(), deploymentName, metav1.GetOptions{})
 	return *deployment, err

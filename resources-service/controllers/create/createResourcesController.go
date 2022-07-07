@@ -30,7 +30,7 @@ func CreateNamespace(c *fiber.Ctx) error {
 	}
 
 	// create a new namespace with annotation "projectId"
-	nsClient := auth.MyClientSet.CoreV1().Namespaces()
+	nsClient := auth.MyInClusterClientSet.CoreV1().Namespaces()
 
 	// create a random hash and append it to the namespace name
 	h := sha1.New()

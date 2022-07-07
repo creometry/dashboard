@@ -11,7 +11,7 @@ import (
 
 func GetSecrets(namespace string) ([]v1.Secret, error) {
 
-	secretsClient := auth.MyClientSet.CoreV1().Secrets(namespace)
+	secretsClient := auth.MyInClusterClientSet.CoreV1().Secrets(namespace)
 
 	list, err := secretsClient.List(context.TODO(), metav1.ListOptions{})
 	return list.Items, err
@@ -20,7 +20,7 @@ func GetSecrets(namespace string) ([]v1.Secret, error) {
 
 func GetSecret(namespace string, secretName string) (v1.Secret, error) {
 
-	secretsClient := auth.MyClientSet.CoreV1().Secrets(namespace)
+	secretsClient := auth.MyInClusterClientSet.CoreV1().Secrets(namespace)
 
 	secret, err := secretsClient.Get(context.TODO(), secretName, metav1.GetOptions{})
 	return *secret, err
