@@ -1,4 +1,4 @@
-package controllers
+package list
 
 import (
 	"github.com/Creometry/resources-service/resource/configmap"

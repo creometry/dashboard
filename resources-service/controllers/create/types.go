@@ -1,13 +1,11 @@
-package controllers
+package create
 
 import "errors"
 
-
 type CreateNsRequestBody struct {
 	ProjectName string `json:"projectName"`
-	ProjectId string `json:"projectId"`
+	ProjectId   string `json:"projectId"`
 }
-
 
 // function to validate the request body
 func (req *CreateNsRequestBody) Validate() error {

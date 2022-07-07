@@ -1,4 +1,4 @@
-package controllers
+package create
 
 import (
 	"context"
@@ -13,9 +13,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-
-
-func CreateNamespace(c *fiber.Ctx) error{
+func CreateNamespace(c *fiber.Ctx) error {
 
 	// get the request body
 	var req CreateNsRequestBody
