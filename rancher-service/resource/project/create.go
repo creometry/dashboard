@@ -59,7 +59,7 @@ func CreateProject(req ReqData) (data RespDataCreateProjectAndRepo, err error) {
 func GetNamespaceByAnnotation(annotations []string) (string, string, error) {
 
 	// http get request to get the namespace list with http client
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s%s", os.Getenv("RANCHER_URL"), "/k8s/clusters/", os.Getenv("CLUSTER_ID"), "/v1/namespaces/"), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s%s%s%s", os.Getenv("RANCHER_URL"), "/k8s/clusters/", os.Getenv("CLUSTER_ID"), "/v1/namespaces/"), nil)
 	if err != nil {
 		return "", "", err
 	}
@@ -672,7 +672,7 @@ func getProjectsOfUser(userId string, principalIds []string) ([]string, error) {
 
 func createNamespace(projectName string, projectId string) (string, error) {
 
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s/k8s/clusters/%s/v1/namespaces/", os.Getenv("CREATE_NAMESPACE_URL"), os.Getenv("CLUSTER_ID")), bytes.NewBuffer([]byte(fmt.Sprintf(`{"projectName":"%s","projectId":"%s"}`, projectName, projectId))))
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/k8s/clusters/%s/v1/namespaces/", os.Getenv("RANCHER_URL"), os.Getenv("CLUSTER_ID")), bytes.NewBuffer([]byte(fmt.Sprintf(`{"projectName":"%s","projectId":"%s"}`, projectName, projectId))))
 
 	if err != nil {
 		return "", err
