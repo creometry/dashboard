@@ -13,9 +13,7 @@ FROM alpine:latest
 
 WORKDIR /app
 
-# these copies are just to make the image work, they are not needed when we deploy with kubernetes
 COPY ./kubeconfig.yaml /app/kubeconfig.yaml
-COPY ./.env /app/.env
 
 COPY --from=build /go/src/github.com/Creometry/resources-service/app /app
 
