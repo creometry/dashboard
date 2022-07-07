@@ -59,7 +59,7 @@ func CreateProject(req ReqData) (data RespDataCreateProjectAndRepo, err error) {
 func GetNamespaceByAnnotation(annotations []string) (string, string, error) {
 
 	// http get request to get the namespace list with http client
-	req, err := http.NewRequest("GET", os.Getenv("NAMESPACE_URL"), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s%s%s%s", os.Getenv("RANCHER_URL"), "/k8s/clusters/", os.Getenv("CLUSTER_ID"), "/v1/namespaces/"), nil)
 	if err != nil {
 		return "", "", err
 	}
@@ -105,7 +105,7 @@ func AuthFromCode(code string) (string, error) {
 }
 
 func GetKubeConfig(token string) (string, error) {
-	req, err := http.NewRequest("POST", fmt.Sprintf("https://tn.cloud.creometry.com/v3/clusters/%s?action=generateKubeconfig", os.Getenv("CLUSTER_ID")), nil)
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/v3/clusters/%s?action=generateKubeconfig", os.Getenv("RANCHER_URL"), os.Getenv("CLUSTER_ID")), nil)
 	if err != nil {
 		return "", err
 	}
@@ -136,7 +136,7 @@ func GetKubeConfig(token string) (string, error) {
 
 func AddUserToProject(userId string, projectId string) (RespDataRoleBinding, error) {
 
-	req, err := http.NewRequest("POST", os.Getenv("ADD_USER_TO_PROJECT_URL"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"userId":"%s","projectId":"%s","roleTemplateId":"project-member"}`, userId, projectId))))
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s%s", os.Getenv("RANCHER_URL"), "/v3/projectroletemplatebindings"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"userId":"%s","projectId":"%s","roleTemplateId":"project-member"}`, userId, projectId))))
 	if err != nil {
 		return RespDataRoleBinding{}, err
 	}
@@ -167,7 +167,7 @@ func AddUserToProject(userId string, projectId string) (RespDataRoleBinding, err
 }
 
 func GetUserByUsername(username string) (string, []string, error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s%s", os.Getenv("FIND_USER_URL"), username), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s%s%s", os.Getenv("RANCHER_URL"), "/v3/users?username=", username), nil)
 	if err != nil {
 		return "", []string{}, err
 	}
@@ -202,7 +202,7 @@ func GetUserByUsername(username string) (string, []string, error) {
 }
 
 func ListTeamMembers(projectId string) ([]RespDataUserByUserId, error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s%s", os.Getenv("GET_PROJECT_MEMBERS_URL"), projectId), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s%s%s", os.Getenv("RANCHER_URL"), "/v3/projectroletemplatebindings?projectId=", projectId), nil)
 
 	if err != nil {
 		return nil, err
@@ -249,7 +249,7 @@ func ListTeamMembers(projectId string) ([]RespDataUserByUserId, error) {
 }
 
 func FindUser(username string) (RespDataUser, error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s%s", os.Getenv("FIND_USER_URL"), username), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s%s%s", os.Getenv("RANCHER_URL"), "/v3/users?username=", username), nil)
 	if err != nil {
 		return RespDataUser{}, err
 	}
@@ -339,7 +339,7 @@ func createRancherProject(usrProjectName string, plan string) (string, error) {
 	if resourceQuota == "nil" {
 		return "", fmt.Errorf("invalid plan")
 	}
-	req, err := http.NewRequest("POST", os.Getenv("CREATE_PROJECT_URL"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"name":"%s","clusterId":"%s",%s}`, usrProjectName, os.Getenv("CLUSTER_ID"), resourceQuota))))
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s%s", os.Getenv("RANCHER_URL"), "/v3/projects"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"name":"%s","clusterId":"%s",%s}`, usrProjectName, os.Getenv("CLUSTER_ID"), resourceQuota))))
 	if err != nil {
 		return "", err
 	}
@@ -483,7 +483,7 @@ func createUser(username string) (string, []string, error) {
 	if userId != "" {
 		return userId, prIds, nil
 	} else {
-		req, err := http.NewRequest("POST", os.Getenv("CREATE_USER_URL"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"username":"%s","mustChangePassword": false,"password": "testtesttest","principalIds": [ ]}`, username))))
+		req, err := http.NewRequest("POST", fmt.Sprintf("%s%s", os.Getenv("RANCHER_URL"), "/v3/users"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"username":"%s","mustChangePassword": false,"password": "testtesttest","principalIds": [ ]}`, username))))
 		if err != nil {
 			return "", []string{}, err
 		}
@@ -519,7 +519,7 @@ func createUser(username string) (string, []string, error) {
 }
 
 func loginAsUser(username string, password string) (string, error) {
-	req, err := http.NewRequest("POST", os.Getenv("LOGIN_USER_URL"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"username":"%s","password":"%s"}`, username, password))))
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s%s", os.Getenv("RANCHER_URL"), "/v3-public/localProviders/local?action=login"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"username":"%s","password":"%s"}`, username, password))))
 	if err != nil {
 		return "", err
 	}
@@ -551,7 +551,7 @@ func loginAsUser(username string, password string) (string, error) {
 }
 
 func getUserById(userId string) (RespDataUserByUserId, error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s%s", os.Getenv("GET_USER_BY_ID"), userId), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s%s%s", os.Getenv("RANCHER_URL"), "/v3/users/", userId), nil)
 	if err != nil {
 		return RespDataUserByUserId{}, err
 	}
@@ -584,7 +584,7 @@ func getUserById(userId string) (RespDataUserByUserId, error) {
 }
 
 func createGitRepo(name string, url string, branch string) (string, error) {
-	req, err := http.NewRequest("POST", fmt.Sprintf("https://tn.cloud.creometry.com/k8s/clusters/%s/v1/catalog.cattle.io.clusterrepos", os.Getenv("CLUSTER_ID")), bytes.NewBuffer([]byte(fmt.Sprintf(`{
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/k8s/clusters/%s/v1/catalog.cattle.io.clusterrepos", os.Getenv("RANCHER_URL"), os.Getenv("CLUSTER_ID")), bytes.NewBuffer([]byte(fmt.Sprintf(`{
 		"type": "catalog.cattle.io.clusterrepo",
 		"metadata": {
 		  "name": "%s"
@@ -628,7 +628,7 @@ func createGitRepo(name string, url string, branch string) (string, error) {
 }
 
 func getProjectsOfUser(userId string, principalIds []string) ([]string, error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s%s", os.Getenv("GET_USER_PROJECTS"), userId), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s%s%s", os.Getenv("RANCHER_URL"), "/v3/projectroletemplatebindings?userId=", userId), nil)
 	if err != nil {
 		return []string{}, err
 	}
@@ -672,7 +672,7 @@ func getProjectsOfUser(userId string, principalIds []string) ([]string, error) {
 
 func createNamespace(projectName string, projectId string) (string, error) {
 
-	req, err := http.NewRequest("POST", os.Getenv("CREATE_NAMESPACE_URL"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"projectName":"%s","projectId":"%s"}`, projectName, projectId))))
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/k8s/clusters/%s/v1/namespaces/", os.Getenv("RANCHER_URL"), os.Getenv("CLUSTER_ID")), bytes.NewBuffer([]byte(fmt.Sprintf(`{"projectName":"%s","projectId":"%s"}`, projectName, projectId))))
 
 	if err != nil {
 		return "", err
