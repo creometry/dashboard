@@ -1,29 +1,29 @@
+# create the config map for the backend to use from a .env file
+# kubectl create configmap rancher-service-env --from-file=.env
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: backend-deploy
+  name: rancher-service-deploy
 spec:
+  strategy:
+    type: RollingUpdate
+  revisionHistoryLimit: 3
   replicas: 1
   selector:
     matchLabels:
-      run: creometry-backend
+      run: rancher-service
   template:
     metadata:
       labels:
-        run: creometry-backend
+        run: rancher-service
     spec:
-      volumes:
-        # need to create this configmap for the backend to use
-        #  kubectl create configmap app.config --from-file=.env
-        - name: config-volume
-          configMap:
-            name: app.config
       containers:
-        - image: creometry/backend
-          name: backend
-          volumeMounts:
-            - mountPath: /app/config
-              name: config-volume
+        - image: creometry/rancher-service
+          name: rancher-service
+          envFrom:
+            - configMapRef:
+                name: rancher-service-env
           ports:
             - containerPort: 3001
           resources:
@@ -38,11 +38,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: creometry-backend-svc
+  name: rancher-service-svc
 spec:
   ports:
     - name: "3001"
       port: 3001
       targetPort: 3001
   selector:
-    run: creometry-backend
+    run: rancher-service
