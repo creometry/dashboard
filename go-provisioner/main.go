@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/Creometry/rancher-service/routes"
+	"github.com/Creometry/dashboard/go-provisioner/routes"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 

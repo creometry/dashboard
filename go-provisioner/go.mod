@@ -1,4 +1,4 @@
-module github.com/Creometry/rancher-service
+module github.com/Creometry/dashboard/go-provisioner
 
 go 1.18
 

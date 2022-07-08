@@ -13,6 +13,52 @@ type ReqData struct {
 	GitRepoUrl     string `json:"gitRepoUrl"`
 }
 
+type ReqDataNewUser struct {
+	UsrProjectName string `json:"projectName"`
+	Username       string `json:"username"`
+	Plan           string `json:"plan"`
+	GitRepoName    string `json:"gitRepoName"`
+	GitRepoBranch  string `json:"gitRepoBranch"`
+	GitRepoUrl     string `json:"gitRepoUrl"`
+}
+
+type ReqDataLogin struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+func (r *ReqDataLogin) Validate() error {
+	if r.Username == "" {
+		return fmt.Errorf("username is required")
+	}
+	if r.Password == "" {
+		return fmt.Errorf("password is required")
+	}
+	return nil
+}
+
+func (r *ReqDataNewUser) Validate() error {
+	if r.UsrProjectName == "" {
+		return fmt.Errorf("project name is required")
+	}
+	if r.Plan == "" {
+		return fmt.Errorf("plan is required")
+	}
+	if r.Username == "" {
+		return fmt.Errorf("username is required")
+	}
+	if r.GitRepoName == "" {
+		return fmt.Errorf("git repo name is required")
+	}
+	if r.GitRepoBranch == "" {
+		return fmt.Errorf("git repo branch is required")
+	}
+	if r.GitRepoUrl == "" {
+		return fmt.Errorf("git repo url is required")
+	}
+	return nil
+}
+
 func (r *ReqData) Validate() error {
 	if r.UsrProjectName == "" {
 		return fmt.Errorf("projectName is required")
@@ -35,6 +81,10 @@ func (r *ReqData) Validate() error {
 	return nil
 }
 
+type TokenResponse struct {
+	Token string `json:"token"`
+}
+
 type CreateNsRespData struct {
 	Error  string `json:"error"`
 	NsName string `json:"ns_name"`
@@ -44,10 +94,14 @@ type RespData struct {
 	ProjectId string `json:"id"`
 }
 
-type RespDataCreateProjectAndRepo struct {
-	User_token string `json:"user_token"`
-	Namespace  string `json:"namespace"`
-	ProjectId  string `json:"projectId"`
+type RespDataProvisionProject struct {
+	ProjectId string `json:"projectId"`
+}
+
+type RespDataProvisionProjectNewUser struct {
+	ProjectId string `json:"projectId"`
+	Token     string `json:"token"`
+	Password  string `json:"password"`
 }
 
 type RespDataRoleBinding struct {
@@ -129,12 +183,4 @@ type RespDataUserByUserId struct {
 	Username string `json:"username"`
 	Id       string `json:"id"`
 	Type     string `json:"type"`
-}
-
-type RespDataTeamMembers struct {
-	Data []TeamMemberData `json:"data"`
-}
-
-type TeamMemberData struct {
-	UserId string `json:"userId"`
 }

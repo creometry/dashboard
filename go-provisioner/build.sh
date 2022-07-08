@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-package="github.com/Creometry/rancher-service"
+package="github.com/Creometry/dashboard/go-provisioner"
 package_split=(${package//\// })
 package_name=${package_split[-1]}
 
