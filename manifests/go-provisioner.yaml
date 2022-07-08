@@ -4,7 +4,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: rancher-service-deploy
+  name: go-provisioner-deploy
 spec:
   strategy:
     type: RollingUpdate
@@ -12,18 +12,18 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      run: rancher-service
+      run: go-provisioner
   template:
     metadata:
       labels:
-        run: rancher-service
+        run: go-provisioner
     spec:
       containers:
-        - image: creometry/rancher-service
-          name: rancher-service
+        - image: creometry/go-provisioner
+          name: go-provisioner
           envFrom:
             - configMapRef:
-                name: rancher-service-env
+                name: go-provisioner-env
           ports:
             - containerPort: 3001
           resources:
@@ -38,11 +38,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: rancher-service-svc
+  name: go-provisioner-svc
 spec:
   ports:
     - name: "3001"
       port: 3001
       targetPort: 3001
   selector:
-    run: rancher-service
+    run: go-provisioner
