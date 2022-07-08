@@ -1,6 +1,6 @@
 FROM golang:1.18 AS build
 
-WORKDIR /go/src/github.com/Creometry/rancher-service
+WORKDIR /go/src/github.com/Creometry/dashboard/go-provisioner
 
 COPY . .
 
@@ -15,7 +15,7 @@ WORKDIR /app
 
 COPY ./.env /app/.env
 
-COPY --from=build /go/src/github.com/Creometry/rancher-service/app /app
+COPY --from=build /go/src/github.com/Creometry/dashboard/go-provisioner/app /app
 
 EXPOSE 3001
 
