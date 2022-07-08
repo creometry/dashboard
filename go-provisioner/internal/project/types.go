@@ -47,15 +47,6 @@ func (r *ReqDataNewUser) Validate() error {
 	if r.Username == "" {
 		return fmt.Errorf("username is required")
 	}
-	if r.GitRepoName == "" {
-		return fmt.Errorf("git repo name is required")
-	}
-	if r.GitRepoBranch == "" {
-		return fmt.Errorf("git repo branch is required")
-	}
-	if r.GitRepoUrl == "" {
-		return fmt.Errorf("git repo url is required")
-	}
 	return nil
 }
 
@@ -68,15 +59,6 @@ func (r *ReqData) Validate() error {
 	}
 	if r.UserId == "" {
 		return fmt.Errorf("user id is required")
-	}
-	if r.GitRepoName == "" {
-		return fmt.Errorf("gitRepoName is required")
-	}
-	if r.GitRepoUrl == "" {
-		return fmt.Errorf("gitRepoUrl is required")
-	}
-	if r.GitRepoBranch == "" {
-		r.GitRepoBranch = "master"
 	}
 	return nil
 }

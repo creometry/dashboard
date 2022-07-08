@@ -2,6 +2,7 @@ package project
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -11,18 +12,23 @@ import (
 	"net/http"
 	"os"
 	"strings"
+
+	"github.com/Creometry/dashboard/go-provisioner/auth"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // Exportable functions
 
 func ProvisionProjectNewUser(req ReqDataNewUser) (data RespDataProvisionProjectNewUser, err error) {
 	// create gitRepo
-	repoName, err := createGitRepo(req.GitRepoName, req.GitRepoUrl, req.GitRepoBranch)
-	if err != nil {
-		return RespDataProvisionProjectNewUser{}, err
+	if req.GitRepoUrl != "" {
+		repoName, err := createGitRepo(req.GitRepoName, req.GitRepoUrl, req.GitRepoBranch)
+		if err != nil {
+			return RespDataProvisionProjectNewUser{}, err
+		}
+		fmt.Printf("Created repo : %s", repoName)
 	}
-	fmt.Printf("Created repo : %s", repoName)
-
 	// create rancher project
 	projectId, err := createRancherProject(req.UsrProjectName, req.Plan)
 	if err != nil {
@@ -68,12 +74,13 @@ func ProvisionProjectNewUser(req ReqDataNewUser) (data RespDataProvisionProjectN
 
 func ProvisionProject(req ReqData) (data RespDataProvisionProject, err error) {
 	// create gitRepo
-	repoName, err := createGitRepo(req.GitRepoName, req.GitRepoUrl, req.GitRepoBranch)
-	if err != nil {
-		return RespDataProvisionProject{}, err
+	if req.GitRepoUrl != "" {
+		repoName, err := createGitRepo(req.GitRepoName, req.GitRepoUrl, req.GitRepoBranch)
+		if err != nil {
+			return RespDataProvisionProject{}, err
+		}
+		fmt.Printf("Created repo : %s", repoName)
 	}
-	fmt.Printf("Created repo : %s", repoName)
-
 	// create rancher project
 	projectId, err := createRancherProject(req.UsrProjectName, req.Plan)
 	if err != nil {
@@ -633,42 +640,25 @@ func getProjectsOfUser(userId string, principalIds []string) ([]string, error) {
 
 func createNamespace(projectName string, projectId string) (string, error) {
 
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s/k8s/clusters/%s/v1/namespaces/", os.Getenv("RANCHER_URL"), os.Getenv("CLUSTER_ID")), bytes.NewBuffer([]byte(fmt.Sprintf(`{"projectName":"%s","projectId":"%s"}`, projectName, projectId))))
+	nsClient := auth.MyClientSet.CoreV1().Namespaces()
 
+	nsName := strings.ToLower(projectName) + "-" + generateRandomString(10)
+
+	ns := &v1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: nsName,
+			Annotations: map[string]string{
+				"field.cattle.io/projectId": projectId,
+			},
+			Labels: map[string]string{
+				"field.cattle.io/projectId": strings.Split(projectId, ":")[1],
+			},
+		},
+	}
+
+	newNs, err := nsClient.Create(context.TODO(), ns, metav1.CreateOptions{})
 	if err != nil {
 		return "", err
 	}
-
-	client := &http.Client{}
-
-	resp, err := client.Do(req)
-
-	if err != nil {
-		return "", err
-	}
-
-	defer resp.Body.Close()
-
-	// parse response body
-
-	dt := CreateNsRespData{}
-
-	body, err := ioutil.ReadAll(resp.Body)
-
-	if err != nil {
-		return "", err
-	}
-
-	err = json.Unmarshal(body, &dt)
-
-	if err != nil {
-		return "", err
-	}
-
-	if dt.Error != "" {
-		return "", errors.New(dt.Error)
-	}
-
-	return dt.NsName, nil
-
+	return newNs.Name, nil
 }
