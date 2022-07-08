@@ -17,12 +17,13 @@ import (
 
 func ProvisionProjectNewUser(req ReqDataNewUser) (data RespDataProvisionProjectNewUser, err error) {
 	// create gitRepo
+	if(req.GitRepoUrl != "") {
 	repoName, err := createGitRepo(req.GitRepoName, req.GitRepoUrl, req.GitRepoBranch)
 	if err != nil {
 		return RespDataProvisionProjectNewUser{}, err
 	}
 	fmt.Printf("Created repo : %s", repoName)
-
+	}
 	// create rancher project
 	projectId, err := createRancherProject(req.UsrProjectName, req.Plan)
 	if err != nil {
@@ -68,12 +69,13 @@ func ProvisionProjectNewUser(req ReqDataNewUser) (data RespDataProvisionProjectN
 
 func ProvisionProject(req ReqData) (data RespDataProvisionProject, err error) {
 	// create gitRepo
+	if(req.GitRepoUrl != "") {
 	repoName, err := createGitRepo(req.GitRepoName, req.GitRepoUrl, req.GitRepoBranch)
 	if err != nil {
 		return RespDataProvisionProject{}, err
 	}
 	fmt.Printf("Created repo : %s", repoName)
-
+}
 	// create rancher project
 	projectId, err := createRancherProject(req.UsrProjectName, req.Plan)
 	if err != nil {
