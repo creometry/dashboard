@@ -13,8 +13,6 @@ FROM alpine:latest
 
 WORKDIR /app
 
-COPY ./.env /app/.env
-
 COPY --from=build /go/src/github.com/Creometry/dashboard/go-provisioner/app /app
 
 EXPOSE 3001

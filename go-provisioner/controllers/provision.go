@@ -3,6 +3,7 @@ package controllers
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/Creometry/dashboard/go-provisioner/internal/project"
 	"github.com/Creometry/dashboard/go-provisioner/internal/team"
@@ -118,38 +119,48 @@ func ListTeamMembers(c *fiber.Ctx) error {
 			"error": "projectId is required",
 		})
 	}
-	data, err := team.ListTeamMembers(fmt.Sprintf("%s:%s", projectId, os.Getenv("CLUSTER_ID")))
+	// if projectId contains ':' then list team members without change
+	var prId string
+	if strings.Contains(projectId, ":") {
+		prId = projectId
+	} else {
+		prId = fmt.Sprintf("%s:%s", os.Getenv("CLUSTER_ID"), projectId)
+	}
+	data, err := team.ListTeamMembers(prId)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
 		})
 	}
+	if data == nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "no members found or invalid projectId",
+		})
+	}
 	return c.JSON(fiber.Map{
 		"members": data,
+		"prId":    prId,
 	})
 }
 
 func AddTeamMember(c *fiber.Ctx) error {
 	projectId := c.Params("projectId")
-	username := c.Params("userId")
+	userId := c.Params("userId")
 
-	if projectId == "" || username == "" {
+	if projectId == "" || userId == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "projectId and username are required",
+			"error": "projectId and userId are required",
 		})
 	}
-	userId, _, err := project.GetUserByUsername(username)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
-		})
+
+	var prId string
+	if strings.Contains(projectId, ":") {
+		prId = projectId
+	} else {
+		prId = fmt.Sprintf("%s:%s", os.Getenv("CLUSTER_ID"), projectId)
 	}
-	if userId == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "user not found",
-		})
-	}
-	data, err := project.AddUserToProject(userId, projectId)
+
+	data, err := project.AddUserToProject(userId, prId)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),

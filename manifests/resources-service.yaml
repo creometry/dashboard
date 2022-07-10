@@ -1,5 +1,3 @@
-# create a namespace named resources-service-ns
-
 apiVersion: v1
 kind: Namespace
 metadata:

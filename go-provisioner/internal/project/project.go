@@ -57,7 +57,7 @@ func ProvisionProjectNewUser(req ReqDataNewUser) (data RespDataProvisionProjectN
 		return RespDataProvisionProjectNewUser{}, err
 	}
 	//login as user to get token
-	token, err := Login(userId, password)
+	token, err := Login(req.Username, password)
 
 	if err != nil {
 		return RespDataProvisionProjectNewUser{}, err
