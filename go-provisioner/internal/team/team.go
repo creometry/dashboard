@@ -53,7 +53,6 @@ func ListTeamMembers(projectId string) ([]RespDataUserByUserId, error) {
 			}
 		}
 	}
-
 	return res, nil
 
 }
