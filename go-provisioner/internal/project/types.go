@@ -166,3 +166,8 @@ type RespDataUserByUserId struct {
 	Id       string `json:"id"`
 	Type     string `json:"type"`
 }
+
+
+type RespDataCreateBillingAccount struct {
+	Id string `json:"id"`
+}

@@ -51,11 +51,15 @@ func ProvisionProjectNewUser(req ReqDataNewUser) (data RespDataProvisionProjectN
 	// make post request to resources-service/namespace and pass the project name and id to create a namespace in the specific project
 	nsName, err := createNamespace(req.UsrProjectName, projectId)
 
-	fmt.Printf("Created namespace : %s", nsName)
-
+	
 	if err != nil {
 		return RespDataProvisionProjectNewUser{}, err
 	}
+	fmt.Printf("Created namespace : %s", nsName)
+
+	// if I get the billing account id from the request, I need to add the project to the billing account, otherwise I need to create a new billing account and add the project to it
+
+	
 	//login as user to get token
 	token, err := Login(req.Username, password)
 
@@ -102,9 +106,8 @@ func ProvisionProject(req ReqData) (data RespDataProvisionProject, err error) {
 		return RespDataProvisionProject{}, err
 	}
 
-	if err != nil {
-		return RespDataProvisionProject{}, err
-	}
+	// if I get the billing account id from the request, I need to add the project to the billing account, otherwise I need to create a new billing account and add the project to it
+
 
 	resp := RespDataProvisionProject{
 		ProjectId: projectId,
@@ -661,4 +664,44 @@ func createNamespace(projectName string, projectId string) (string, error) {
 		return "", err
 	}
 	return newNs.Name, nil
+}
+
+func createBillingAccount(name string,userId string) (string, error) {
+	// change the request body
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s%s", os.Getenv("BILLING_URL"), "api/v1/billingaccounts"), bytes.NewBuffer([]byte(fmt.Sprintf(`{
+		"type": "billingaccount",
+		"metadata": {
+		  "name": "%s"
+		},
+		"spec": {
+		  "externalId": "%s"
+		}
+	  }`, name, name))))
+
+	if err != nil {
+		return "", err
+	}
+
+	client := &http.Client{}
+
+	resp, err := client.Do(req)
+
+	if err != nil {
+		return "", err
+	}
+
+	defer resp.Body.Close()
+
+	// parse response body
+	dt := RespDataCreateBillingAccount{}
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+	err = json.Unmarshal(body, &dt)
+	if err != nil {
+		return "", err
+	}
+
+	return dt.Id, nil
 }
