@@ -1,7 +1,6 @@
 package routes
 
 import (
-	c "github.com/Creometry/resources-service/controllers/create"
 	l "github.com/Creometry/resources-service/controllers/list"
 
 	"github.com/gofiber/fiber/v2"
@@ -10,7 +9,6 @@ import (
 func CreateRoutes(app *fiber.App) {
 
 	v1 := app.Group("/api/v1")
-	v1.Post("/namespace", c.CreateNamespace)
 	v1.Get("/pods/:namespace", l.GetAllPods)
 	v1.Get("/pods/:namespace/:pod", l.GetPod)
 	v1.Get("/services/:namespace", l.GetAllServices)
