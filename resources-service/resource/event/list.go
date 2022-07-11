@@ -11,7 +11,7 @@ import (
 func GetEvents(namespace string) ([]v1.Event, error) {
 
 	eventsClient := auth.MyInClusterClientSet.CoreV1().Events(namespace)
-
 	list, err := eventsClient.List(context.TODO(), metav1.ListOptions{})
 	return list.Items, err
+
 }

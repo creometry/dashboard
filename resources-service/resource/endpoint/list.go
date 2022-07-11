@@ -12,7 +12,6 @@ import (
 func GetEndpoints(namespace string) ([]v1.Endpoints, error) {
 
 	endpointsClient := auth.MyInClusterClientSet.CoreV1().Endpoints(namespace)
-
 	list, err := endpointsClient.List(context.TODO(), metav1.ListOptions{})
 	return list.Items, err
 
@@ -21,7 +20,6 @@ func GetEndpoints(namespace string) ([]v1.Endpoints, error) {
 func GetEndpoint(namespace string, endpointName string) (v1.Endpoints, error) {
 
 	endpointsClient := auth.MyInClusterClientSet.CoreV1().Endpoints(namespace)
-
 	endpoint, err := endpointsClient.Get(context.TODO(), endpointName, metav1.GetOptions{})
 	return *endpoint, err
 

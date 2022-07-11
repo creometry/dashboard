@@ -8,20 +8,16 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func GetIngresses(namespace string) (v1.IngressList, error) {
+func GetIngresses(namespace string) ([]v1.Ingress, error) {
 
-	ingressesClient := auth.MyInClusterClientSet.NetworkingV1().Ingresses(namespace)
-
-	list, err := ingressesClient.List(context.TODO(), metav1.ListOptions{})
-	return *list, err
+	list, err := auth.MyInClusterClientSet.NetworkingV1().Ingresses(namespace).List(context.TODO(), metav1.ListOptions{})
+	return list.Items, err
 
 }
 
 func GetIngress(namespace string, ingressName string) (v1.Ingress, error) {
 
-	ingressesClient := auth.MyInClusterClientSet.NetworkingV1().Ingresses(namespace)
-
-	ingress, err := ingressesClient.Get(context.TODO(), ingressName, metav1.GetOptions{})
+	ingress, err := auth.MyInClusterClientSet.NetworkingV1().Ingresses(namespace).Get(context.TODO(), ingressName, metav1.GetOptions{})
 	return *ingress, err
 
 }

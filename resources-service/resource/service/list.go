@@ -10,11 +10,17 @@ import (
 )
 
 func GetServices(namespace string) ([]v1.Service, error) {
-	services, err := auth.MyInClusterClientSet.CoreV1().Services(namespace).List(context.TODO(), metav1.ListOptions{})
+
+	servicesClient := auth.MyInClusterClientSet.CoreV1().Services(namespace)
+	services, err := servicesClient.List(context.TODO(), metav1.ListOptions{})
 	return services.Items, err
+
 }
 
 func GetService(namespace string, serviceName string) (v1.Service, error) {
-	service, err := auth.MyInClusterClientSet.CoreV1().Services(namespace).Get(context.TODO(), serviceName, metav1.GetOptions{})
+
+	servicesClient := auth.MyInClusterClientSet.CoreV1().Services(namespace)
+	service, err := servicesClient.Get(context.TODO(), serviceName, metav1.GetOptions{})
 	return *service, err
+
 }

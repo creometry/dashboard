@@ -9,11 +9,17 @@ import (
 )
 
 func GetPods(namespace string) ([]v1.Pod, error) {
-	pods, err := auth.MyInClusterClientSet.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{})
+
+	podsClient := auth.MyInClusterClientSet.CoreV1().Pods(namespace)
+	pods, err := podsClient.List(context.TODO(), metav1.ListOptions{})
 	return pods.Items, err
+
 }
 
 func GetPod(namespace string, podName string) (v1.Pod, error) {
-	pod, err := auth.MyInClusterClientSet.CoreV1().Pods(namespace).Get(context.TODO(), podName, metav1.GetOptions{})
+
+	podsClient := auth.MyInClusterClientSet.CoreV1().Pods(namespace)
+	pod, err := podsClient.Get(context.TODO(), podName, metav1.GetOptions{})
 	return *pod, err
+
 }
