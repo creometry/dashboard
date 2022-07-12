@@ -6,6 +6,7 @@ import (
 
 type ReqData struct {
 	UsrProjectName string `json:"projectName"`
+	PaymentToken string `json:"paymentToken"`
 	UserId         string `json:"userId"`
 	Plan           string `json:"plan"`
 	GitRepoName    string `json:"gitRepoName"`
@@ -25,6 +26,10 @@ type ReqDataNewUser struct {
 type ReqDataLogin struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
+}
+
+type ReqDataRegister struct {
+	Username string `json:"username"`
 }
 
 func (r *ReqDataLogin) Validate() error {
@@ -51,6 +56,9 @@ func (r *ReqDataNewUser) Validate() error {
 }
 
 func (r *ReqData) Validate() error {
+	if r.PaymentToken == "" {
+		return fmt.Errorf("payment token is required")
+	}
 	if r.UsrProjectName == "" {
 		return fmt.Errorf("projectName is required")
 	}
@@ -108,7 +116,7 @@ type RespDataLogin struct {
 	AuthProvider string `json:"authProvider"`
 	Token        string `json:"token"`
 	Name         string `json:"name"`
-	Id           string `json:"id"`
+	Id           string `json:"userId"`
 }
 
 type RespDataCreateGitRepo struct {
@@ -170,4 +178,17 @@ type RespDataUserByUserId struct {
 
 type RespDataCreateBillingAccount struct {
 	Id string `json:"id"`
+}
+
+type CheckPaymeePaymentResponse struct {
+	Status string `json:"status"`
+	Message string `json:"message"`
+	Code   int64 `json:"code"`
+	Data   struct {
+		PaymentStatus string `json:"payment_status"`
+		Token string `json:"token"`
+		Amount float64 `json:"amount"`
+		TransactionId int64 `json:"transaction_id"`
+		BuyerId int64 `json:"buyer_id"`
+	}
 }

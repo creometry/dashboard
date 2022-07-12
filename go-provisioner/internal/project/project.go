@@ -20,63 +20,66 @@ import (
 
 // Exportable functions
 
-func ProvisionProjectNewUser(req ReqDataNewUser) (data RespDataProvisionProjectNewUser, err error) {
-	// create gitRepo
-	if req.GitRepoUrl != "" {
-		repoName, err := createGitRepo(req.GitRepoName, req.GitRepoUrl, req.GitRepoBranch)
-		if err != nil {
-			return RespDataProvisionProjectNewUser{}, err
-		}
-		fmt.Printf("Created repo : %s", repoName)
-	}
-	// create rancher project
-	projectId, err := createRancherProject(req.UsrProjectName, req.Plan)
-	if err != nil {
-		return RespDataProvisionProjectNewUser{}, err
-	}
-	// create random password
-	password := generateRandomString(12)
+// func ProvisionProjectNewUser(req ReqDataNewUser) (data RespDataProvisionProjectNewUser, err error) {
+// 	// create gitRepo
+// 	if req.GitRepoUrl != "" {
+// 		repoName, err := createGitRepo(req.GitRepoName, req.GitRepoUrl, req.GitRepoBranch)
+// 		if err != nil {
+// 			return RespDataProvisionProjectNewUser{}, err
+// 		}
+// 		fmt.Printf("Created repo : %s", repoName)
+// 	}
+// 	// create rancher project
+// 	projectId, err := createRancherProject(req.UsrProjectName, req.Plan)
+// 	if err != nil {
+// 		return RespDataProvisionProjectNewUser{}, err
+// 	}
+// 	// create random password
+// 	password := generateRandomString(12)
 
-	// create user
-	userId, _, err := createUser(req.Username, password)
-	if err != nil {
-		return RespDataProvisionProjectNewUser{}, err
-	}
-	// add user to project
-	_, err = AddUserToProject(userId, projectId)
-	if err != nil {
-		return RespDataProvisionProjectNewUser{}, err
-	}
+// 	// create user
+// 	userId, _, err := createUser(req.Username, password)
+// 	if err != nil {
+// 		return RespDataProvisionProjectNewUser{}, err
+// 	}
+// 	// add user to project
+// 	_, err = AddUserToProject(userId, projectId)
+// 	if err != nil {
+// 		return RespDataProvisionProjectNewUser{}, err
+// 	}
 
-	// make post request to resources-service/namespace and pass the project name and id to create a namespace in the specific project
-	nsName, err := createNamespace(req.UsrProjectName, projectId)
+// 	// make post request to resources-service/namespace and pass the project name and id to create a namespace in the specific project
+// 	nsName, err := createNamespace(req.UsrProjectName, projectId)
 
-	
-	if err != nil {
-		return RespDataProvisionProjectNewUser{}, err
-	}
-	fmt.Printf("Created namespace : %s", nsName)
+// 	if err != nil {
+// 		return RespDataProvisionProjectNewUser{}, err
+// 	}
+// 	fmt.Printf("Created namespace : %s", nsName)
 
-	// if I get the billing account id from the request, I need to add the project to the billing account, otherwise I need to create a new billing account and add the project to it
+// 	// if I get the billing account id from the request, I need to add the project to the billing account, otherwise I need to create a new billing account and add the project to it
 
-	
-	//login as user to get token
-	token, err := Login(req.Username, password)
+// 	//login as user to get token
+// 	token, err := Login(req.Username, password)
 
-	if err != nil {
-		return RespDataProvisionProjectNewUser{}, err
-	}
+// 	if err != nil {
+// 		return RespDataProvisionProjectNewUser{}, err
+// 	}
 
-	resp := RespDataProvisionProjectNewUser{
-		ProjectId: projectId,
-		Token:     token,
-		Password:  password,
-	}
-	return resp, nil
+// 	resp := RespDataProvisionProjectNewUser{
+// 		ProjectId: projectId,
+// 		Token:     token,
+// 		Password:  password,
+// 	}
+// 	return resp, nil
 
-}
+// }
 
 func ProvisionProject(req ReqData) (data RespDataProvisionProject, err error) {
+	// check paymee payment
+	_,err=checkPayment(req.PaymentToken)
+	if err != nil {
+		return RespDataProvisionProject{}, err
+	}
 	// create gitRepo
 	if req.GitRepoUrl != "" {
 		repoName, err := createGitRepo(req.GitRepoName, req.GitRepoUrl, req.GitRepoBranch)
@@ -255,94 +258,10 @@ func GetUserByUsername(username string) (string, []string, error) {
 
 }
 
-// func FindUser(username string) (RespDataUser, error) {
-// 	req, err := http.NewRequest("GET", fmt.Sprintf("%s%s%s", os.Getenv("RANCHER_URL"), "/v3/users?username=", username), nil)
-// 	if err != nil {
-// 		return RespDataUser{}, err
-// 	}
-
-// 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("RANCHER_TOKEN")))
-
-// 	client := &http.Client{}
-
-// 	resp, err := client.Do(req)
-
-// 	if err != nil {
-// 		return RespDataUser{}, err
-// 	}
-// 	defer resp.Body.Close()
-
-// 	// parse response body
-// 	dt := UserData{}
-// 	body, err := ioutil.ReadAll(resp.Body)
-// 	if err != nil {
-// 		return RespDataUser{}, err
-// 	}
-// 	err = json.Unmarshal(body, &dt)
-// 	if err != nil {
-// 		return RespDataUser{}, err
-// 	}
-
-// 	// if user exists, login and return token
-// 	if len(dt.Data) > 0 {
-// 		token, err := loginAsUser(username, "testtesttest")
-// 		if err != nil {
-// 			return RespDataUser{}, err
-// 		}
-
-// 		// get his projectName
-// 		pr, err := getProjectsOfUser(dt.Data[0].Id, dt.Data[0].PrincipalIds)
-// 		if err != nil {
-// 			return RespDataUser{}, err
-// 		}
-
-// 		// get namespace of project
-// 		if len(pr) > 0 {
-// 			rs, prId, err := GetNamespaceByAnnotation(pr)
-// 			if err != nil {
-// 				return RespDataUser{}, err
-// 			}
-
-// 			log.Printf("rs: %s", rs)
-// 			log.Printf("prId: %s", prId)
-// 			return RespDataUser{
-// 				Id:        dt.Data[0].Id,
-// 				Token:     token,
-// 				Namespace: rs,
-// 				ProjectId: strings.Split(prId, ":")[1],
-// 			}, nil
-// 		} else {
-// 			return RespDataUser{
-// 				Id:        dt.Data[0].Id,
-// 				Token:     token,
-// 				Namespace: "",
-// 				ProjectId: "",
-// 			}, nil
-// 		}
-
-// 	}
-
-// 	// if user does not exist, create user and return token
-// 	id, _, err := createUser(username)
-// 	if err != nil {
-// 		return RespDataUser{}, err
-// 	}
-
-// 	token, err := loginAsUser(username, "testtesttest")
-// 	if err != nil {
-// 		return RespDataUser{}, err
-// 	}
-// 	return RespDataUser{
-// 		Id:        id,
-// 		Token:     token,
-// 		Namespace: "",
-// 	}, nil
-// }
-
-func Login(username string, password string) (string, error) {
+func Login(username string, password string) (string,string, error) {
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s%s", os.Getenv("RANCHER_URL"), "/v3-public/localProviders/local?action=login"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"username":"%s","password":"%s"}`, username, password))))
 	if err != nil {
-		return "", err
+		return "","", err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -352,7 +271,7 @@ func Login(username string, password string) (string, error) {
 	resp, err := client.Do(req)
 
 	if err != nil {
-		return "", err
+		return "", "",err
 	}
 	defer resp.Body.Close()
 
@@ -360,15 +279,62 @@ func Login(username string, password string) (string, error) {
 	dt := RespDataLogin{}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
+		return "", "",err
 	}
 	err = json.Unmarshal(body, &dt)
 	if err != nil {
-		return "", err
+		return "", "",err
 	}
 
-	return dt.Token, nil
+	return dt.Id, dt.Token,nil
 
+}
+
+func Register(username string) (string, string,string, error) {
+
+	password := generateRandomString(16)
+
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s%s", os.Getenv("RANCHER_URL"), "/v3/users"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"username":"%s","mustChangePassword": true,"password": "%s","enabled": true,"type":"user"}`, username, password))))
+	if err != nil {
+		return "",   "","", err
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("RANCHER_TOKEN")))
+
+	client := &http.Client{}
+
+	resp, err := client.Do(req)
+
+	if err != nil {
+		return "",   "","", err
+	}
+
+	defer resp.Body.Close()
+
+	// parse response body
+	dt := RespDataCreateUser{}
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "",   "","", err
+	}
+	err = json.Unmarshal(body, &dt)
+	if err != nil {
+		return "",  "","", err
+	}
+
+	err = createGlobalRoleBinding(dt.Id)
+
+	if err != nil {
+		return "",   "","", err
+	}
+	// login user
+	id,token,err:=Login(username, password)
+	if err != nil {
+		return "", "","", err
+	}
+
+
+	return id,token ,password, nil
 }
 
 // Local functions
@@ -405,6 +371,40 @@ func createRancherProject(usrProjectName string, plan string) (string, error) {
 	}
 
 	return dt.ProjectId, nil
+}
+
+func createGlobalRoleBinding(id string) error {
+	req2, err := http.NewRequest("POST", fmt.Sprintf("%s%s", os.Getenv("RANCHER_URL"), "/v3/globalrolebindings"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"type":"globalRoleBinding","globalRoleId":"user","userId":"%s"}`, id))))
+
+	if err != nil {
+		return err
+	}
+
+	req2.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("RANCHER_TOKEN")))
+
+	client2 := &http.Client{}
+
+	resp2, err := client2.Do(req2)
+	
+	if err != nil {
+		return err
+	}
+
+	defer resp2.Body.Close()
+
+	// parse response body
+	dt2 := RespDataCreateUser{}
+	body2, err := ioutil.ReadAll(resp2.Body)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(body2, &dt2)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func genResourceQuotaFromPlan(plan string) string {
@@ -519,39 +519,6 @@ func generateRandomString(n int) string {
 		b[i] = letterBytes[rand.Intn(len(letterBytes))]
 	}
 	return string(b)
-}
-
-func createUser(username string, password string) (string, []string, error) {
-
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s%s", os.Getenv("RANCHER_URL"), "/v3/users"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"username":"%s","mustChangePassword": true,"password": "%s","principalIds": [ ]}`, username, password))))
-	if err != nil {
-		return "", []string{}, err
-	}
-
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("RANCHER_TOKEN")))
-
-	client := &http.Client{}
-
-	resp, err := client.Do(req)
-
-	if err != nil {
-		return "", []string{}, err
-	}
-
-	defer resp.Body.Close()
-
-	// parse response body
-	dt := RespDataCreateUser{}
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return "", []string{}, err
-	}
-	err = json.Unmarshal(body, &dt)
-	if err != nil {
-		return "", []string{}, err
-	}
-
-	return dt.Id, dt.PrincipalIds, nil
 }
 
 func createGitRepo(name string, url string, branch string) (string, error) {
@@ -704,4 +671,40 @@ func createBillingAccount(name string,userId string) (string, error) {
 	}
 
 	return dt.Id, nil
+}
+
+func checkPayment(token string) (CheckPaymeePaymentResponse, error) {
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/api/v1/payments/%s/check",os.Getenv("PAYMEE_URL"),token), nil)
+	if err != nil {
+		return CheckPaymeePaymentResponse{}, err
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Token %s", os.Getenv("PAYMEE_TOKEN")))
+
+	client := &http.Client{}
+
+	resp, err := client.Do(req)
+
+	if err != nil {
+		return CheckPaymeePaymentResponse{}, err
+	}
+
+	defer resp.Body.Close()
+
+	// parse response body
+	dt := CheckPaymeePaymentResponse{}
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return CheckPaymeePaymentResponse{}, err
+	}
+	err = json.Unmarshal(body, &dt)
+	if err != nil {
+		return CheckPaymeePaymentResponse{}, err
+	}
+
+	if dt.Message != "Success" || dt.Data.BuyerId == 0 {
+		return CheckPaymeePaymentResponse{}, errors.New("Payment failed")
+	}
+
+	return dt, nil
 }

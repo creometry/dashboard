@@ -36,33 +36,33 @@ func ProvisionProject(c *fiber.Ctx) error {
 	})
 }
 
-func ProvisionProjectNewUser(c *fiber.Ctx) error {
-	// parse the request body
-	reqData := new(project.ReqDataNewUser)
-	if err := c.BodyParser(reqData); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
-		})
-	}
-	// check if the request body is valid
-	if err := reqData.Validate(); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
-		})
-	}
+// func ProvisionProjectNewUser(c *fiber.Ctx) error {
+// 	// parse the request body
+// 	reqData := new(project.ReqDataNewUser)
+// 	if err := c.BodyParser(reqData); err != nil {
+// 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+// 			"error": err.Error(),
+// 		})
+// 	}
+// 	// check if the request body is valid
+// 	if err := reqData.Validate(); err != nil {
+// 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+// 			"error": err.Error(),
+// 		})
+// 	}
 
-	data, err := project.ProvisionProjectNewUser(*reqData)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
-		})
-	}
-	return c.JSON(fiber.Map{
-		"projectId": data.ProjectId,
-		"token":     data.Token,
-		"password":  data.Password,
-	})
-}
+// 	data, err := project.ProvisionProjectNewUser(*reqData)
+// 	if err != nil {
+// 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+// 			"error": err.Error(),
+// 		})
+// 	}
+// 	return c.JSON(fiber.Map{
+// 		"projectId": data.ProjectId,
+// 		"token":     data.Token,
+// 		"password":  data.Password,
+// 	})
+// }
 
 func GenerateKubeConfig(c *fiber.Ctx) error {
 	// get the token from the body
@@ -88,29 +88,6 @@ func GenerateKubeConfig(c *fiber.Ctx) error {
 		"config": data,
 	})
 }
-
-// func FindUserAndLoginOrCreate(c *fiber.Ctx) error {
-// 	// get username from path
-// 	username := c.Params("username")
-// 	if username == "" {
-// 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-// 			"error": "username is required",
-// 		})
-// 	}
-
-// 	data, err := project.FindUser(username)
-// 	if err != nil {
-// 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-// 			"error": err.Error(),
-// 		})
-// 	}
-// 	return c.JSON(fiber.Map{
-// 		"user_token": data.Token,
-// 		"user_id":    data.Id,
-// 		"namespace":  data.Namespace,
-// 		"projectId":  data.ProjectId,
-// 	})
-// }
 
 func ListTeamMembers(c *fiber.Ctx) error {
 	projectId := c.Params("projectId")
@@ -186,7 +163,7 @@ func Login(c *fiber.Ctx) error {
 			"error": err.Error(),
 		})
 	}
-	token, err := project.Login(reqData.Username, reqData.Password)
+	token,id, err := project.Login(reqData.Username, reqData.Password)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
@@ -194,5 +171,40 @@ func Login(c *fiber.Ctx) error {
 	}
 	return c.JSON(fiber.Map{
 		"token": token,
+		"userId":    id,
+	})
+}
+
+func Register(c *fiber.Ctx) error {
+	// get the token from the body
+	reqData := new(project.ReqDataRegister)
+	if err := c.BodyParser(reqData); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+	// check if the request body is valid
+	if reqData.Username == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "username is required",
+		})
+	}
+	id,token ,password, err := project.Register(reqData.Username)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	if token == "" || id == "" || password == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "error registering user",
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"token": token,
+		"userId":    id,
+		"password":  password,
 	})
 }
