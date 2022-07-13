@@ -6,6 +6,7 @@ import (
 
 type ReqData struct {
 	UsrProjectName string `json:"projectName"`
+	BillingAccountId string `json:"billingAccountId"`
 	PaymentToken string `json:"paymentToken"`
 	UserId         string `json:"userId"`
 	Plan           string `json:"plan"`
@@ -56,6 +57,9 @@ func (r *ReqDataNewUser) Validate() error {
 }
 
 func (r *ReqData) Validate() error {
+	if r.BillingAccountId == "" {
+		return fmt.Errorf("billing account id is required")
+	}
 	if r.PaymentToken == "" {
 		return fmt.Errorf("payment token is required")
 	}
