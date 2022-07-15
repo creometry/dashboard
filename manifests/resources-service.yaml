@@ -17,6 +17,7 @@ spec:
       labels:
         run: resources-service
     spec:
+      automountServiceAccountToken: true
       containers:
         - image: seifbarouni/resources-service:latest
           name: resources-service

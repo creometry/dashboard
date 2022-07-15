@@ -19,12 +19,13 @@ spec:
       labels:
         run: go-provisioner
     spec:
+      automountServiceAccountToken: true
       containers:
         - image: seifbarouni/go-provisioner:latest
           name: go-provisioner
           envFrom:
             - configMapRef:
-                name: go-provisioner-env
+                name: go-provisioner-config
           ports:
             - containerPort: 3001
           resources:
@@ -59,5 +60,5 @@ data:
 kind: ConfigMap
 metadata:
   creationTimestamp: null
-  name: go-provisioner-env
+  name: go-provisioner-config
 #  namespace: go-provisioner-ns
