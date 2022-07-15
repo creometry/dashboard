@@ -102,3 +102,6 @@ dist
 
 # TernJS port file
 .tern-port
+
+# ommit pushing secrets
+manifests/secrets.yaml
