@@ -21,7 +21,7 @@ spec:
     spec:
       automountServiceAccountToken: true
       containers:
-        - image: seifbarouni/go-provisioner:latest
+        - image: seifbarouni/go-provisioner:v0.0.1
           name: go-provisioner
           envFrom:
             - configMapRef:
