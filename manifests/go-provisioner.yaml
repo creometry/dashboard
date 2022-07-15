@@ -1,0 +1,97 @@
+# create the config map for the backend to use from a .env file
+# kubectl create configmap go-provisioner-env -n go-provisioner-ns --from-file=.env
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: go-provisioner-ns
+spec: {}
+status: {}
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: go-provisioner-sa
+  namespace: go-provisioner-ns
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: go-provisioner-sa-role
+rules:
+  - apiGroups:
+      - ""
+      - apps
+      - autoscaling
+      - batch
+      - extensions
+      - policy
+      - rbac.authorization.k8s.io
+    resources:
+      - namespaces
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: go-provisioner-sa-role-binding
+subjects:
+  - kind: ServiceAccount
+    name: go-provisioner-sa
+    namespace: go-provisioner-ns
+roleRef:
+  kind: ClusterRole
+  name: go-provisioner-sa-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: go-provisioner-deploy
+  namespace: go-provisioner-ns
+spec:
+  strategy:
+    type: RollingUpdate
+  revisionHistoryLimit: 3
+  replicas: 1
+  selector:
+    matchLabels:
+      run: go-provisioner
+  template:
+    metadata:
+      labels:
+        run: go-provisioner
+    spec:
+      serviceAccountName: go-provisioner-sa
+      containers:
+        - image: seifbarouni/go-provisioner:latest
+          name: go-provisioner
+          envFrom:
+            - configMapRef:
+                name: go-provisioner-env
+          ports:
+            - containerPort: 3001
+          resources:
+            limits:
+              cpu: "100m"
+              memory: "256Mi"
+            requests:
+              cpu: "5m"
+              memory: "10Mi"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: go-provisioner-svc
+  namespace: go-provisioner-ns
+spec:
+  ports:
+    - name: "3001"
+      port: 3001
+      targetPort: 3001
+  selector:
+    run: go-provisioner

@@ -1,0 +1,112 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: resources-service-ns
+spec: {}
+status: {}
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: resources-service-sa
+  namespace: resources-service-ns
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: resources-service-sa-role
+rules:
+  - apiGroups:
+      - ""
+      - apps
+      - autoscaling
+      - batch
+      - extensions
+      - policy
+      - rbac.authorization.k8s.io
+    resources:
+      - pods
+      - componentstatuses
+      - configmaps
+      - daemonsets
+      - deployments
+      - events
+      - endpoints
+      - horizontalpodautoscalers
+      - ingress
+      - jobs
+      - limitranges
+      - namespaces
+      - nodes
+      - pods
+      - persistentvolumes
+      - persistentvolumeclaims
+      - resourcequotas
+      - replicasets
+      - replicationcontrollers
+      - serviceaccounts
+      - services
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: resources-service-sa-role-binding
+subjects:
+  - kind: ServiceAccount
+    name: resources-service-sa
+    namespace: resources-service-ns
+roleRef:
+  kind: ClusterRole
+  name: resources-service-sa-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: resources-service-deploy
+  namespace: resources-service-ns
+spec:
+  strategy:
+    type: RollingUpdate
+  revisionHistoryLimit: 3
+  replicas: 1
+  selector:
+    matchLabels:
+      run: resources-service
+  template:
+    metadata:
+      labels:
+        run: resources-service
+    spec:
+      serviceAccountName: resources-service-sa
+      containers:
+        - image: seifbarouni/resources-service:latest
+          name: resources-service
+          ports:
+            - containerPort: 3002
+          resources:
+            limits:
+              cpu: "200m"
+              memory: "256Mi"
+            requests:
+              cpu: "5m"
+              memory: "10Mi"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: resources-service-svc
+  namespace: resources-service-ns
+spec:
+  ports:
+    - name: "3002"
+      port: 3002
+      targetPort: 3002
+  selector:
+    run: resources-service
