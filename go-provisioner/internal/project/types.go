@@ -185,11 +185,11 @@ type RespDataCreateBillingAccount struct {
 }
 
 type CheckPaymeePaymentResponse struct {
-	Status string `json:"status"`
+	Status bool `json:"status"`
 	Message string `json:"message"`
 	Code   int64 `json:"code"`
 	Data   struct {
-		PaymentStatus string `json:"payment_status"`
+		PaymentStatus bool `json:"payment_status"`
 		Token string `json:"token"`
 		Amount float64 `json:"amount"`
 		TransactionId int64 `json:"transaction_id"`
