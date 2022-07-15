@@ -19,7 +19,6 @@ spec:
       labels:
         run: go-provisioner
     spec:
-      serviceAccountName: go-provisioner-sa
       containers:
         - image: seifbarouni/go-provisioner:latest
           name: go-provisioner
