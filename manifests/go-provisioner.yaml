@@ -19,7 +19,7 @@ spec:
       labels:
         run: go-provisioner
     spec:
-      automountServiceAccountToken: true
+      
       containers:
         - image: seifbarouni/go-provisioner:v0.0.1
           name: go-provisioner
@@ -35,8 +35,15 @@ spec:
             requests:
               cpu: "5m"
               memory: "10Mi"
-
----
+          volumeMounts:
+            - name: go-provisioner-config-volume
+              mountPath: "/config"
+              readOnly: true
+      volumes:
+        - name: go-provisioner-config-volume
+          configMap:
+            name: go-provisioner-config
+  ---
 apiVersion: v1
 kind: Service
 metadata:
