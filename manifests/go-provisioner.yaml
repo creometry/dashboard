@@ -5,7 +5,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: go-provisioner-deploy
-  namespace: go-provisioner-ns
+ # namespace: go-provisioner-ns
 spec:
   strategy:
     type: RollingUpdate
@@ -41,7 +41,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: go-provisioner-svc
-  namespace: go-provisioner-ns
+ # namespace: go-provisioner-ns
 spec:
   ports:
     - name: "3001"
@@ -61,4 +61,4 @@ kind: ConfigMap
 metadata:
   creationTimestamp: null
   name: go-provisioner-env
-  namespace: go-provisioner-ns
+#  namespace: go-provisioner-ns
