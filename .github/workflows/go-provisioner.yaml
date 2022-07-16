@@ -3,7 +3,7 @@ name: go-provisioner CI
 on:
   push:
     branches:
-      - "**"
+      - stable
 
 jobs:
   # test:
