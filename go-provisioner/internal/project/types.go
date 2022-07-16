@@ -5,14 +5,14 @@ import (
 )
 
 type ReqData struct {
-	UsrProjectName string `json:"projectName"`
+	UsrProjectName   string `json:"projectName"`
 	BillingAccountId string `json:"billingAccountId"`
-	PaymentToken string `json:"paymentToken"`
-	UserId         string `json:"userId"`
-	Plan           string `json:"plan"`
-	GitRepoName    string `json:"gitRepoName"`
-	GitRepoBranch  string `json:"gitRepoBranch"`
-	GitRepoUrl     string `json:"gitRepoUrl"`
+	PaymentToken     string `json:"paymentToken"`
+	UserId           string `json:"userId"`
+	Plan             string `json:"plan"`
+	GitRepoName      string `json:"gitRepoName"`
+	GitRepoBranch    string `json:"gitRepoBranch"`
+	GitRepoUrl       string `json:"gitRepoUrl"`
 }
 
 type ReqDataNewUser struct {
@@ -179,20 +179,19 @@ type RespDataUserByUserId struct {
 	Type     string `json:"type"`
 }
 
-
 type RespDataCreateBillingAccount struct {
 	Id string `json:"id"`
 }
 
 type CheckPaymeePaymentResponse struct {
-	Status bool `json:"status"`
+	Status  bool   `json:"status"`
 	Message string `json:"message"`
-	Code   int64 `json:"code"`
-	Data   struct {
-		PaymentStatus bool `json:"payment_status"`
-		Token string `json:"token"`
-		Amount float64 `json:"amount"`
-		TransactionId int64 `json:"transaction_id"`
-		BuyerId int64 `json:"buyer_id"`
+	Code    int64  `json:"code"`
+	Data    struct {
+		PaymentStatus bool    `json:"payment_status"`
+		Token         string  `json:"token"`
+		Amount        float64 `json:"amount"`
+		TransactionId int64   `json:"transaction_id"`
+		BuyerId       int64   `json:"buyer_id"`
 	}
 }
