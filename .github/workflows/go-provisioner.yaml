@@ -27,5 +27,5 @@ jobs:
           dockerfile: go-provisioner/Dockerfile
           registry: docker.io
           directory: go-provisioner
-          username: creometry
-          password: ${{ secrets.dashboard }}
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
