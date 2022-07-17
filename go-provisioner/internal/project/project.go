@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/Creometry/dashboard/go-provisioner/auth"
+	"github.com/Creometry/dashboard/go-provisioner/utils"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -76,7 +77,7 @@ import (
 
 func ProvisionProject(req ReqData) (data RespDataProvisionProject, err error) {
 	// check paymee payment
-	_,err=checkPayment(req.PaymentToken)
+	_, err = checkPayment(req.PaymentToken)
 	if err != nil {
 		return RespDataProvisionProject{}, err
 	}
@@ -111,7 +112,6 @@ func ProvisionProject(req ReqData) (data RespDataProvisionProject, err error) {
 
 	// if I get the billing account id from the request, I need to add the project to the billing account, otherwise I need to create a new billing account and add the project to it
 
-
 	resp := RespDataProvisionProject{
 		ProjectId: projectId,
 	}
@@ -121,13 +121,28 @@ func ProvisionProject(req ReqData) (data RespDataProvisionProject, err error) {
 
 func GetNamespaceByAnnotation(annotations []string) (string, string, error) {
 
-	// http get request to get the namespace list with http client
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s%s%s%s", os.Getenv("RANCHER_URL"), "/k8s/clusters/", os.Getenv("CLUSTER_ID"), "/v1/namespaces/"), nil)
+	clusterId, err := utils.GetVariable("config", "CLUSTER_ID")
 	if err != nil {
 		return "", "", err
 	}
 
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("RANCHER_TOKEN")))
+	rancherURL, err := utils.GetVariable("config", "RANCHER_URL")
+	if err != nil {
+		return "", "", err
+	}
+
+	rancherToken, err := utils.GetVariable("secrets", "RANCHER_TOKEN")
+	if err != nil {
+		return "", "", err
+	}
+
+	// http get request to get the namespace list with http client
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s%s%s%s", rancherURL, "/k8s/clusters/", clusterId, "/v1/namespaces/"), nil)
+	if err != nil {
+		return "", "", err
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", rancherToken))
 
 	client := &http.Client{}
 
@@ -149,7 +164,7 @@ func GetNamespaceByAnnotation(annotations []string) (string, string, error) {
 		return "", "", err
 	}
 	for _, annotation := range annotations {
-		newAnnotation := fmt.Sprintf("%s:%s", os.Getenv("CLUSTER_ID"), strings.Split(annotation, ":")[0])
+		newAnnotation := fmt.Sprintf("%s:%s", clusterId, strings.Split(annotation, ":")[0])
 		for _, ns := range dt.Data {
 			if ns.Metadata.Annotations["field.cattle.io/projectId"] == newAnnotation {
 				return ns.Id, newAnnotation, nil
@@ -162,7 +177,18 @@ func GetNamespaceByAnnotation(annotations []string) (string, string, error) {
 }
 
 func GetKubeConfig(token string) (string, error) {
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s/v3/clusters/%s?action=generateKubeconfig", os.Getenv("RANCHER_URL"), os.Getenv("CLUSTER_ID")), nil)
+
+	clusterId, err := utils.GetVariable("config", "CLUSTER_ID")
+	if err != nil {
+		return "", err
+	}
+
+	rancherURL, err := utils.GetVariable("config", "RANCHER_URL")
+	if err != nil {
+		return "", err
+	}
+
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/v3/clusters/%s?action=generateKubeconfig", rancherURL, clusterId), nil)
 	if err != nil {
 		return "", err
 	}
@@ -193,12 +219,22 @@ func GetKubeConfig(token string) (string, error) {
 
 func AddUserToProject(userId string, projectId string) (RespDataRoleBinding, error) {
 
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s%s", os.Getenv("RANCHER_URL"), "/v3/projectroletemplatebindings"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"userId":"%s","projectId":"%s","roleTemplateId":"project-member"}`, userId, projectId))))
+	rancherURL, err := utils.GetVariable("config", "RANCHER_URL")
 	if err != nil {
 		return RespDataRoleBinding{}, err
 	}
 
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("RANCHER_TOKEN")))
+	rancherToken, err := utils.GetVariable("secrets", "RANCHER_TOKEN")
+	if err != nil {
+		return RespDataRoleBinding{}, err
+	}
+
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s%s", rancherURL, "/v3/projectroletemplatebindings"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"userId":"%s","projectId":"%s","roleTemplateId":"project-member"}`, userId, projectId))))
+	if err != nil {
+		return RespDataRoleBinding{}, err
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", rancherToken))
 
 	client := &http.Client{}
 
@@ -224,12 +260,22 @@ func AddUserToProject(userId string, projectId string) (RespDataRoleBinding, err
 }
 
 func GetUserByUsername(username string) (string, []string, error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s%s%s", os.Getenv("RANCHER_URL"), "/v3/users?username=", username), nil)
+	rancherURL, err := utils.GetVariable("config", "RANCHER_URL")
 	if err != nil {
 		return "", []string{}, err
 	}
 
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("RANCHER_TOKEN")))
+	rancherToken, err := utils.GetVariable("secrets", "RANCHER_TOKEN")
+	if err != nil {
+		return "", []string{}, err
+	}
+
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s%s%s", rancherURL, "/v3/users?username=", username), nil)
+	if err != nil {
+		return "", []string{}, err
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", rancherToken))
 
 	client := &http.Client{}
 
@@ -258,10 +304,16 @@ func GetUserByUsername(username string) (string, []string, error) {
 
 }
 
-func Login(username string, password string) (string,string, error) {
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s%s", os.Getenv("RANCHER_URL"), "/v3-public/localProviders/local?action=login"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"username":"%s","password":"%s"}`, username, password))))
+func Login(username string, password string) (string, string, error) {
+
+	rancherURL, err := utils.GetVariable("config", "RANCHER_URL")
 	if err != nil {
-		return "","", err
+		return "", "", err
+	}
+
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s%s", rancherURL, "/v3-public/localProviders/local?action=login"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"username":"%s","password":"%s"}`, username, password))))
+	if err != nil {
+		return "", "", err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -271,7 +323,7 @@ func Login(username string, password string) (string,string, error) {
 	resp, err := client.Do(req)
 
 	if err != nil {
-		return "", "",err
+		return "", "", err
 	}
 	defer resp.Body.Close()
 
@@ -279,34 +331,44 @@ func Login(username string, password string) (string,string, error) {
 	dt := RespDataLogin{}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return "", "",err
+		return "", "", err
 	}
 	err = json.Unmarshal(body, &dt)
 	if err != nil {
-		return "", "",err
+		return "", "", err
 	}
 
-	return dt.Id, dt.Token,nil
+	return dt.Id, dt.Token, nil
 
 }
 
-func Register(username string) (string, string,string, error) {
+func Register(username string) (string, string, string, error) {
+
+	rancherURL, err := utils.GetVariable("config", "RANCHER_URL")
+	if err != nil {
+		return "", "", "", err
+	}
+
+	rancherToken, err := utils.GetVariable("secrets", "RANCHER_TOKEN")
+	if err != nil {
+		return "", "", "", err
+	}
 
 	password := generateRandomString(16)
 
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s%s", os.Getenv("RANCHER_URL"), "/v3/users"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"username":"%s","mustChangePassword": true,"password": "%s","enabled": true,"type":"user"}`, username, password))))
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s%s", rancherURL, "/v3/users"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"username":"%s","mustChangePassword": true,"password": "%s","enabled": true,"type":"user"}`, username, password))))
 	if err != nil {
-		return "",   "","", err
+		return "", "", "", err
 	}
 
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("RANCHER_TOKEN")))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", rancherToken))
 
 	client := &http.Client{}
 
 	resp, err := client.Do(req)
 
 	if err != nil {
-		return "",   "","", err
+		return "", "", "", err
 	}
 
 	defer resp.Body.Close()
@@ -315,26 +377,25 @@ func Register(username string) (string, string,string, error) {
 	dt := RespDataCreateUser{}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return "",   "","", err
+		return "", "", "", err
 	}
 	err = json.Unmarshal(body, &dt)
 	if err != nil {
-		return "",  "","", err
+		return "", "", "", err
 	}
 
 	err = createGlobalRoleBinding(dt.Id)
 
 	if err != nil {
-		return "",   "","", err
+		return "", "", "", err
 	}
 	// login user
-	id,token,err:=Login(username, password)
+	id, token, err := Login(username, password)
 	if err != nil {
-		return "", "","", err
+		return "", "", "", err
 	}
 
-
-	return id,token ,password, nil
+	return id, token, password, nil
 }
 
 // Local functions
@@ -344,12 +405,28 @@ func createRancherProject(usrProjectName string, plan string) (string, error) {
 	if resourceQuota == "nil" {
 		return "", fmt.Errorf("invalid plan")
 	}
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s%s", os.Getenv("RANCHER_URL"), "/v3/projects"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"name":"%s","clusterId":"%s",%s}`, usrProjectName, os.Getenv("CLUSTER_ID"), resourceQuota))))
+
+	clusterId, err := utils.GetVariable("config", "CLUSTER_ID")
 	if err != nil {
 		return "", err
 	}
 
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("RANCHER_TOKEN")))
+	rancherURL, err := utils.GetVariable("config", "RANCHER_URL")
+	if err != nil {
+		return "", err
+	}
+
+	rancherToken, err := utils.GetVariable("secrets", "RANCHER_TOKEN")
+	if err != nil {
+		return "", err
+	}
+
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s%s", rancherURL, "/v3/projects"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"name":"%s","clusterId":"%s",%s}`, usrProjectName, clusterId, resourceQuota))))
+	if err != nil {
+		return "", err
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", rancherToken))
 
 	client := &http.Client{}
 
@@ -374,18 +451,29 @@ func createRancherProject(usrProjectName string, plan string) (string, error) {
 }
 
 func createGlobalRoleBinding(id string) error {
-	req2, err := http.NewRequest("POST", fmt.Sprintf("%s%s", os.Getenv("RANCHER_URL"), "/v3/globalrolebindings"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"type":"globalRoleBinding","globalRoleId":"user","userId":"%s"}`, id))))
+
+	rancherURL, err := utils.GetVariable("config", "RANCHER_URL")
+	if err != nil {
+		return err
+	}
+
+	rancherToken, err := utils.GetVariable("secrets", "RANCHER_TOKEN")
+	if err != nil {
+		return err
+	}
+
+	req2, err := http.NewRequest("POST", fmt.Sprintf("%s%s", rancherURL, "/v3/globalrolebindings"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"type":"globalRoleBinding","globalRoleId":"user","userId":"%s"}`, id))))
 
 	if err != nil {
 		return err
 	}
 
-	req2.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("RANCHER_TOKEN")))
+	req2.Header.Set("Authorization", fmt.Sprintf("Bearer %s", rancherToken))
 
 	client2 := &http.Client{}
 
 	resp2, err := client2.Do(req2)
-	
+
 	if err != nil {
 		return err
 	}
@@ -522,7 +610,22 @@ func generateRandomString(n int) string {
 }
 
 func createGitRepo(name string, url string, branch string) (string, error) {
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s/k8s/clusters/%s/v1/catalog.cattle.io.clusterrepos", os.Getenv("RANCHER_URL"), os.Getenv("CLUSTER_ID")), bytes.NewBuffer([]byte(fmt.Sprintf(`{
+	clusterId, err := utils.GetVariable("config", "CLUSTER_ID")
+	if err != nil {
+		return "", err
+	}
+
+	rancherURL, err := utils.GetVariable("config", "RANCHER_URL")
+	if err != nil {
+		return "", err
+	}
+
+	rancherToken, err := utils.GetVariable("secrets", "RANCHER_TOKEN")
+	if err != nil {
+		return "", err
+	}
+
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/k8s/clusters/%s/v1/catalog.cattle.io.clusterrepos", rancherURL, clusterId), bytes.NewBuffer([]byte(fmt.Sprintf(`{
 		"type": "catalog.cattle.io.clusterrepo",
 		"metadata": {
 		  "name": "%s"
@@ -539,7 +642,7 @@ func createGitRepo(name string, url string, branch string) (string, error) {
 		return "", err
 	}
 
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("RANCHER_TOKEN")))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", rancherToken))
 
 	client := &http.Client{}
 
@@ -566,12 +669,21 @@ func createGitRepo(name string, url string, branch string) (string, error) {
 }
 
 func getProjectsOfUser(userId string, principalIds []string) ([]string, error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s%s%s", os.Getenv("RANCHER_URL"), "/v3/projectroletemplatebindings?userId=", userId), nil)
+	rancherURL, err := utils.GetVariable("config", "RANCHER_URL")
 	if err != nil {
 		return []string{}, err
 	}
 
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("RANCHER_TOKEN")))
+	rancherToken, err := utils.GetVariable("secrets", "RANCHER_TOKEN")
+	if err != nil {
+		return []string{}, err
+	}
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s%s%s", rancherURL, "/v3/projectroletemplatebindings?userId=", userId), nil)
+	if err != nil {
+		return []string{}, err
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", rancherToken))
 
 	client := &http.Client{}
 
@@ -633,7 +745,7 @@ func createNamespace(projectName string, projectId string) (string, error) {
 	return newNs.Name, nil
 }
 
-func createBillingAccount(name string,userId string) (string, error) {
+func createBillingAccount(name string, userId string) (string, error) {
 	// change the request body
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s%s", os.Getenv("BILLING_URL"), "api/v1/billingaccounts"), bytes.NewBuffer([]byte(fmt.Sprintf(`{
 		"type": "billingaccount",
@@ -674,12 +786,20 @@ func createBillingAccount(name string,userId string) (string, error) {
 }
 
 func checkPayment(token string) (CheckPaymeePaymentResponse, error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/api/v1/payments/%s/check",os.Getenv("PAYMEE_URL"),token), nil)
+	paymeeURL, err := utils.GetVariable("config", "PAYMEE_URL")
+	if err != nil {
+		return CheckPaymeePaymentResponse{}, err
+	}
+	paymeeToken, err := utils.GetVariable("secrets", "PAYMEE_TOKEN")
+	if err != nil {
+		return CheckPaymeePaymentResponse{}, err
+	}
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/api/v1/payments/%s/check", paymeeURL, token), nil)
 	if err != nil {
 		return CheckPaymeePaymentResponse{}, err
 	}
 
-	req.Header.Set("Authorization", fmt.Sprintf("Token %s", os.Getenv("PAYMEE_TOKEN")))
+	req.Header.Set("Authorization", fmt.Sprintf("Token %s", paymeeToken))
 
 	client := &http.Client{}
 
@@ -703,7 +823,7 @@ func checkPayment(token string) (CheckPaymeePaymentResponse, error) {
 	}
 
 	if dt.Message != "Success" || dt.Data.BuyerId == 0 {
-		return CheckPaymeePaymentResponse{}, errors.New("Payment failed")
+		return CheckPaymeePaymentResponse{}, errors.New("payment failed")
 	}
 
 	return dt, nil

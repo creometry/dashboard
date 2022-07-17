@@ -5,7 +5,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: go-provisioner-deploy
- # namespace: go-provisioner-ns
+  # namespace: go-provisioner-ns
 spec:
   strategy:
     type: RollingUpdate
@@ -19,13 +19,9 @@ spec:
       labels:
         run: go-provisioner
     spec:
-      
       containers:
-        - image: seifbarouni/go-provisioner:v0.0.1
+        - image: creometry/go-provisioner:v0.0.1
           name: go-provisioner
-          envFrom:
-            - configMapRef:
-                name: go-provisioner-config
           ports:
             - containerPort: 3001
           resources:
@@ -37,18 +33,24 @@ spec:
               memory: "10Mi"
           volumeMounts:
             - name: go-provisioner-config-volume
-              mountPath: "/config"
+              mountPath: "/app/config"
+              readOnly: true
+            - name: go-provisioner-secrets-volume
+              mountPath: "/app/secrets"
               readOnly: true
       volumes:
         - name: go-provisioner-config-volume
           configMap:
             name: go-provisioner-config
-  ---
+        - name: go-provisioner-secrets-volume
+          secret:
+            secretName: go-provisioner-secrets
+---
 apiVersion: v1
 kind: Service
 metadata:
   name: go-provisioner-svc
- # namespace: go-provisioner-ns
+  # namespace: go-provisioner-ns
 spec:
   ports:
     - name: "3001"
@@ -59,11 +61,11 @@ spec:
 ---
 apiVersion: v1
 data:
-   # RANCHER_TOKEN: add rancher token to a secret 
-    CLUSTER_ID: c-zb22d
-    RANCHER_URL: https://tn.cloud.creometry.com
-    PAYMEE_URL: https://sandbox.paymee.tn
-   # PAYMEE_TOKEN: add rancher token to a secret 
+  # RANCHER_TOKEN: add rancher token to a secret
+  CLUSTER_ID: c-zb22d
+  RANCHER_URL: https://tn.cloud.creometry.com
+  PAYMEE_URL: https://sandbox.paymee.tn
+  # PAYMEE_TOKEN: add rancher token to a secret
 kind: ConfigMap
 metadata:
   creationTimestamp: null

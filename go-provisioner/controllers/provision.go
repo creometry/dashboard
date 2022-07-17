@@ -2,11 +2,11 @@ package controllers
 
 import (
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/Creometry/dashboard/go-provisioner/internal/project"
 	"github.com/Creometry/dashboard/go-provisioner/internal/team"
+	"github.com/Creometry/dashboard/go-provisioner/utils"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -101,7 +101,13 @@ func ListTeamMembers(c *fiber.Ctx) error {
 	if strings.Contains(projectId, ":") {
 		prId = projectId
 	} else {
-		prId = fmt.Sprintf("%s:%s", os.Getenv("CLUSTER_ID"), projectId)
+		clusterId, err := utils.GetVariable("config", "CLUSTER_ID")
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		}
+		prId = fmt.Sprintf("%s:%s", clusterId, projectId)
 	}
 	data, err := team.ListTeamMembers(prId)
 	if err != nil {
@@ -134,7 +140,13 @@ func AddTeamMember(c *fiber.Ctx) error {
 	if strings.Contains(projectId, ":") {
 		prId = projectId
 	} else {
-		prId = fmt.Sprintf("%s:%s", os.Getenv("CLUSTER_ID"), projectId)
+		clusterId, err := utils.GetVariable("config", "CLUSTER_ID")
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		}
+		prId = fmt.Sprintf("%s:%s", clusterId, projectId)
 	}
 
 	data, err := project.AddUserToProject(userId, prId)
@@ -163,15 +175,15 @@ func Login(c *fiber.Ctx) error {
 			"error": err.Error(),
 		})
 	}
-	token,id, err := project.Login(reqData.Username, reqData.Password)
+	token, id, err := project.Login(reqData.Username, reqData.Password)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
 		})
 	}
 	return c.JSON(fiber.Map{
-		"token": token,
-		"userId":    id,
+		"token":  token,
+		"userId": id,
 	})
 }
 
@@ -189,7 +201,7 @@ func Register(c *fiber.Ctx) error {
 			"error": "username is required",
 		})
 	}
-	id,token ,password, err := project.Register(reqData.Username)
+	id, token, password, err := project.Register(reqData.Username)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
@@ -203,8 +215,8 @@ func Register(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(fiber.Map{
-		"token": token,
-		"userId":    id,
-		"password":  password,
+		"token":    token,
+		"userId":   id,
+		"password": password,
 	})
 }
