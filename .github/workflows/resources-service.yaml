@@ -3,7 +3,7 @@ name: resources-service CI
 on:
   push:
     branches:
-      - "**"
+      - stable
 
 jobs:
   # test:
