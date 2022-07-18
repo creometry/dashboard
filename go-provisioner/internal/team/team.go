@@ -5,20 +5,28 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"strings"
+
+	"github.com/Creometry/dashboard/go-provisioner/utils"
 )
 
 // Exportable function
 
 func ListTeamMembers(projectId string) ([]RespDataUserByUserId, error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s%s%s", os.Getenv("RANCHER_URL"), "/v3/projectroletemplatebindings?projectId=", projectId), nil)
+
+	rancherToken, rancherURL, err := getRancherTokenAndUrl()
+
+	if err != nil {
+		return []RespDataUserByUserId{}, err
+	}
+
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s%s%s", rancherURL, "/v3/projectroletemplatebindings?projectId=", projectId), nil)
 
 	if err != nil {
 		return nil, err
 	}
 
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("RANCHER_TOKEN")))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", rancherToken))
 
 	client := &http.Client{}
 
@@ -60,12 +68,19 @@ func ListTeamMembers(projectId string) ([]RespDataUserByUserId, error) {
 // Local functions
 
 func getUserById(userId string) (RespDataUserByUserId, error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s%s%s", os.Getenv("RANCHER_URL"), "/v3/users/", userId), nil)
+
+	rancherToken, rancherURL, err := getRancherTokenAndUrl()
+
 	if err != nil {
 		return RespDataUserByUserId{}, err
 	}
 
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("RANCHER_TOKEN")))
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s%s%s", rancherURL, "/v3/users/", userId), nil)
+	if err != nil {
+		return RespDataUserByUserId{}, err
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", rancherToken))
 
 	client := &http.Client{}
 
@@ -90,4 +105,18 @@ func getUserById(userId string) (RespDataUserByUserId, error) {
 
 	return dt, nil
 
+}
+
+func getRancherTokenAndUrl() (string, string, error) {
+	rancherURL, err := utils.GetVariable("config", "RANCHER_URL")
+	if err != nil {
+		return "", "", err
+	}
+
+	rancherToken, err := utils.GetVariable("secrets", "RANCHER_TOKEN")
+	if err != nil {
+		return "", "", err
+	}
+
+	return rancherToken, rancherURL, nil
 }
