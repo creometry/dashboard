@@ -107,8 +107,6 @@ func getUserById(userId string) (RespDataUserByUserId, error) {
 
 }
 
-// Local functions
-
 func getRancherTokenAndUrl() (string, string, error) {
 	rancherURL, err := utils.GetVariable("config", "RANCHER_URL")
 	if err != nil {
