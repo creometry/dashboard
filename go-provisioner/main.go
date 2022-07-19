@@ -15,7 +15,7 @@ func main() {
 
 	app := fiber.New()
 
-	app.Use(cors.ConfigDefault)
+	app.Use(cors.New())
 
 	routes.CreateRoutes(app)
 
