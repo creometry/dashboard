@@ -62,7 +62,7 @@ spec:
 apiVersion: v1
 data:
   # RANCHER_TOKEN: add rancher token to a secret
-  CLUSTER_ID: c-zb22d
+  CLUSTER_ID: c-cgmb4
   RANCHER_URL: https://tn.cloud.creometry.com
   PAYMEE_URL: https://sandbox.paymee.tn
   # PAYMEE_TOKEN: add rancher token to a secret
