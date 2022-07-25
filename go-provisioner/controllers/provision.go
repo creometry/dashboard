@@ -147,7 +147,7 @@ func Login(c *fiber.Ctx) error {
 			"error": err.Error(),
 		})
 	}
-	token, id, err := project.Login(reqData.Username, reqData.Password)
+	token, id, uuid, err := project.Login(reqData.Username, reqData.Password)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
@@ -156,6 +156,7 @@ func Login(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{
 		"token":  token,
 		"userId": id,
+		"uuid":   uuid,
 	})
 }
 
@@ -173,14 +174,14 @@ func Register(c *fiber.Ctx) error {
 			"error": "username is required",
 		})
 	}
-	id, token, password, err := project.Register(reqData.Username)
+	id, token, password, uuid, err := project.Register(reqData.Username)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
 		})
 	}
 
-	if token == "" || id == "" || password == "" {
+	if token == "" || id == "" || password == "" || uuid == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "error registering user",
 		})
@@ -190,5 +191,6 @@ func Register(c *fiber.Ctx) error {
 		"token":    token,
 		"userId":   id,
 		"password": password,
+		"uuid":     uuid,
 	})
 }

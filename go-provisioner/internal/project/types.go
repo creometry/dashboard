@@ -186,8 +186,6 @@ type RespDataUserByUserId struct {
 	Type     string `json:"type"`
 }
 
-
-
 type CheckPaymeePaymentResponse struct {
 	Status  bool   `json:"status"`
 	Message string `json:"message"`

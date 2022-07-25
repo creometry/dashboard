@@ -21,7 +21,6 @@ import (
 
 // Exportable functions
 
-
 func ProvisionProject(req ReqData) (data RespDataProvisionProject, err error) {
 	// check paymee payment
 	_, err = checkPayment(req.PaymentToken)
@@ -253,16 +252,16 @@ func GetUserByUsername(username string) (string, []string, error) {
 
 }
 
-func Login(username string, password string) (string, string, error) {
+func Login(username string, password string) (string, string, string, error) {
 
 	rancherURL, err := utils.GetVariable("config", "RANCHER_URL")
 	if err != nil {
-		return "", "", err
+		return "", "", "", err
 	}
 
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s%s", rancherURL, "/v3-public/localProviders/local?action=login"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"username":"%s","password":"%s"}`, username, password))))
 	if err != nil {
-		return "", "", err
+		return "", "", "", err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -272,7 +271,7 @@ func Login(username string, password string) (string, string, error) {
 	resp, err := client.Do(req)
 
 	if err != nil {
-		return "", "", err
+		return "", "", "", err
 	}
 	defer resp.Body.Close()
 
@@ -280,34 +279,34 @@ func Login(username string, password string) (string, string, error) {
 	dt := RespDataLogin{}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return "", "", err
+		return "", "", "", err
 	}
 	err = json.Unmarshal(body, &dt)
 	if err != nil {
-		return "", "", err
+		return "", "", "", err
 	}
 
-	return dt.Id, dt.Token, nil
+	return dt.Id, dt.Token, dt.UUID, nil
 
 }
 
-func Register(username string) (string, string, string, error) {
+func Register(username string) (string, string, string, string, error) {
 
 	rancherURL, err := utils.GetVariable("config", "RANCHER_URL")
 	if err != nil {
-		return "", "", "", err
+		return "", "", "", "", err
 	}
 
 	rancherToken, err := utils.GetVariable("secrets", "RANCHER_TOKEN")
 	if err != nil {
-		return "", "", "", err
+		return "", "", "", "", err
 	}
 
 	password := generateRandomString(16)
 
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s%s", rancherURL, "/v3/users"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"username":"%s","mustChangePassword": true,"password": "%s","enabled": true,"type":"user"}`, username, password))))
 	if err != nil {
-		return "", "", "", err
+		return "", "", "", "", err
 	}
 
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", rancherToken))
@@ -317,7 +316,7 @@ func Register(username string) (string, string, string, error) {
 	resp, err := client.Do(req)
 
 	if err != nil {
-		return "", "", "", err
+		return "", "", "", "", err
 	}
 
 	defer resp.Body.Close()
@@ -326,25 +325,25 @@ func Register(username string) (string, string, string, error) {
 	dt := RespDataCreateUser{}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return "", "", "", err
+		return "", "", "", "", err
 	}
 	err = json.Unmarshal(body, &dt)
 	if err != nil {
-		return "", "", "", err
+		return "", "", "", "", err
 	}
 
 	err = createGlobalRoleBinding(dt.Id)
 
 	if err != nil {
-		return "", "", "", err
+		return "", "", "", "", err
 	}
 	// login user
-	id, token, err := Login(username, password)
+	id, token, uuid, err := Login(username, password)
 	if err != nil {
-		return "", "", "", err
+		return "", "", "", "", err
 	}
 
-	return id, token, password, nil
+	return id, token, password, uuid, nil
 }
 
 // Local functions
