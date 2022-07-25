@@ -243,7 +243,7 @@ type Project struct {
 	ClusterId         string    `json:"clusterId"`
 	CreationTimeStamp time.Time `json:"creationTimeStamp"`
 	State             string    `json:"State"`
-	Plan              string    `json:"accountType"`
+	Plan              string    `json:"plan"`
 }
 
 type ReqDataAddProjectToBillingAccount struct {
@@ -251,6 +251,6 @@ type ReqDataAddProjectToBillingAccount struct {
 	ProjectId          string    `json:"project_id"`
 	ClusterId          string    `json:"clusterId"`
 	CreationTimeStamp  time.Time `json:"creationTimeStamp"`
-	Plan               string    `json:"accountType"`
+	Plan               string    `json:"plan"`
 	State              string    `json:"state"`
 }
