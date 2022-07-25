@@ -4,6 +4,7 @@ go 1.18
 
 require (
 	github.com/gofiber/fiber/v2 v2.33.0
+	github.com/google/uuid v1.1.2
 	golang.org/x/oauth2 v0.0.0-20220524215830-622c5d57e401
 	k8s.io/api v0.24.2
 	k8s.io/apimachinery v0.24.2

@@ -10,11 +10,12 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
-	"os"
 	"strings"
+	"time"
 
 	"github.com/Creometry/dashboard/go-provisioner/auth"
 	"github.com/Creometry/dashboard/go-provisioner/utils"
+	"github.com/google/uuid"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -36,12 +37,33 @@ func ProvisionProject(req ReqData) (data RespDataProvisionProject, err error) {
 		fmt.Printf("Created repo : %s", repoName)
 	}
 	// create rancher project
-	projectId, err := createRancherProject(req.UsrProjectName, req.Plan)
+	projectId, createdTS, p_uuid, err := createRancherProject(req.UsrProjectName, req.Plan)
 	if err != nil {
 		return RespDataProvisionProject{}, err
 	}
+	log.Println(p_uuid)
+
+	// convert createdTS TO time.Time
+	t := time.Unix(createdTS, 0)
 
 	// create billing account
+	if req.BillingAccountId == "1" {
+		// create billing account
+		accountId, err := createBillingAccount(req, projectId, t)
+		if err != nil {
+			return RespDataProvisionProject{}, err
+		}
+		log.Println(accountId)
+	} else {
+		// convert string to uuid
+		uid := uuid.MustParse(req.BillingAccountId)
+		// add project to billing account
+		prId, err := addProjectToBillingAccount(uid, projectId, t, req.Plan)
+		if err != nil {
+			return RespDataProvisionProject{}, err
+		}
+		log.Println(prId)
+	}
 
 	// add user to project
 	_, err = AddUserToProject(req.UserId, projectId)
@@ -348,30 +370,30 @@ func Register(username string) (string, string, string, string, error) {
 
 // Local functions
 
-func createRancherProject(usrProjectName string, plan string) (string, error) {
+func createRancherProject(usrProjectName string, plan string) (string, int64, string, error) {
 	resourceQuota := genResourceQuotaFromPlan(plan)
 	if resourceQuota == "nil" {
-		return "", fmt.Errorf("invalid plan")
+		return "", 0, "", fmt.Errorf("invalid plan")
 	}
 
 	clusterId, err := utils.GetVariable("config", "CLUSTER_ID")
 	if err != nil {
-		return "", err
+		return "", 0, "", err
 	}
 
 	rancherURL, err := utils.GetVariable("config", "RANCHER_URL")
 	if err != nil {
-		return "", err
+		return "", 0, "", err
 	}
 
 	rancherToken, err := utils.GetVariable("secrets", "RANCHER_TOKEN")
 	if err != nil {
-		return "", err
+		return "", 0, "", err
 	}
 
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s%s", rancherURL, "/v3/projects"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"name":"%s","clusterId":"%s",%s}`, usrProjectName, clusterId, resourceQuota))))
 	if err != nil {
-		return "", err
+		return "", 0, "", err
 	}
 
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", rancherToken))
@@ -380,7 +402,7 @@ func createRancherProject(usrProjectName string, plan string) (string, error) {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", err
+		return "", 0, "", err
 	}
 
 	defer resp.Body.Close()
@@ -395,7 +417,7 @@ func createRancherProject(usrProjectName string, plan string) (string, error) {
 		log.Fatal(err)
 	}
 
-	return dt.ProjectId, nil
+	return dt.ProjectId, dt.CreatedTS, dt.UUID, nil
 }
 
 func createGlobalRoleBinding(id string) error {
@@ -693,47 +715,6 @@ func createNamespace(projectName string, projectId string) (string, error) {
 	return newNs.Name, nil
 }
 
-// TODO: update this function
-func createBillingAccount(name string, userId string) (string, error) {
-	// change the request body
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s%s", os.Getenv("BILLING_URL"), "api/v1/billingaccounts"), bytes.NewBuffer([]byte(fmt.Sprintf(`{
-		"type": "billingaccount",
-		"metadata": {
-		  "name": "%s"
-		},
-		"spec": {
-		  "externalId": "%s"
-		}
-	  }`, name, name))))
-
-	if err != nil {
-		return "", err
-	}
-
-	client := &http.Client{}
-
-	resp, err := client.Do(req)
-
-	if err != nil {
-		return "", err
-	}
-
-	defer resp.Body.Close()
-
-	// parse response body
-	dt := RespDataCreateBillingAccount{}
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
-	err = json.Unmarshal(body, &dt)
-	if err != nil {
-		return "", err
-	}
-
-	return dt.Id, nil
-}
-
 func checkPayment(token string) (CheckPaymeePaymentResponse, error) {
 	paymeeURL, err := utils.GetVariable("config", "PAYMEE_URL")
 	if err != nil {
@@ -776,4 +757,142 @@ func checkPayment(token string) (CheckPaymeePaymentResponse, error) {
 	}
 
 	return dt, nil
+}
+
+func createBillingAccount(req ReqData, projectId string, t time.Time) (string, error) {
+	billingURL, err := utils.GetVariable("config", "BILLING_URL")
+	if err != nil {
+		return "", err
+	}
+
+	clId := strings.Split(projectId, ":")[0]
+	prId := strings.Split(projectId, ":")[1]
+
+	companyName := ""
+	taxId := ""
+
+	if req.IsCompany {
+		companyName = req.CompanyName
+		taxId = req.TaxId
+	}
+	reqBody := ReqDataCreateBillingAccount{
+		Company: Company{
+			IsCompany: req.IsCompany,
+			TaxId:     taxId,
+			Name:      companyName,
+		},
+		BillingAdmins: []Admin{
+			{
+				UUID:         req.UUID,
+				Email:        req.Email,
+				Phone_number: req.Phone,
+			},
+		},
+		Projects: []Project{
+			{
+				ProjectId:         prId,
+				ClusterId:         clId,
+				CreationTimeStamp: t,
+				State:             "active",
+				Plan:              req.Plan,
+			},
+		},
+	}
+
+	reqBodyJson, err := json.Marshal(reqBody)
+	if err != nil {
+		return "", err
+	}
+
+	r, err := http.NewRequest("POST", fmt.Sprintf("%s/v1/CreateBillingAccount", billingURL), bytes.NewBuffer(reqBodyJson))
+
+	if err != nil {
+		return "", err
+	}
+
+	r.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+
+	resp, err := client.Do(r)
+
+	if err != nil {
+		return "", err
+	}
+
+	defer resp.Body.Close()
+
+	// parse response body
+	dt := RespDataCreateBillingAccount{}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	err = json.Unmarshal(body, &dt)
+
+	if err != nil {
+		return "", err
+	}
+
+	return dt.Id, nil
+
+}
+
+func addProjectToBillingAccount(billingAccountId uuid.UUID, projectId string, t time.Time, plan string) (string, error) {
+	billingURL, err := utils.GetVariable("config", "BILLING_URL")
+	if err != nil {
+		return "", err
+	}
+
+	clId := strings.Split(projectId, ":")[0]
+	prId := strings.Split(projectId, ":")[1]
+
+	reqBody := &ReqDataAddProjectToBillingAccount{
+		BillingAccountUUID: billingAccountId,
+		ProjectId:          prId,
+		ClusterId:          clId,
+		CreationTimeStamp:  t,
+		Plan:               plan,
+		State:              "active",
+	}
+
+	b, err := json.Marshal(reqBody)
+	if err != nil {
+		return "", err
+	}
+
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s%s", billingURL, "/v1/addproject"), bytes.NewBuffer(b))
+
+	if err != nil {
+		return "", err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+
+	resp, err := client.Do(req)
+
+	if err != nil {
+		return "", err
+	}
+
+	defer resp.Body.Close()
+
+	// parse response body
+	dt := RespDataProvisionProject{}
+	body, err := ioutil.ReadAll(resp.Body)
+
+	if err != nil {
+		return "", err
+	}
+	err = json.Unmarshal(body, &dt)
+
+	if err != nil {
+		return "", err
+	}
+
+	return dt.ProjectId, nil
 }

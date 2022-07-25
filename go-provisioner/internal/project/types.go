@@ -3,6 +3,8 @@ package project
 import (
 	"fmt"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type ReqData struct {
@@ -11,10 +13,16 @@ type ReqData struct {
 	BillingAccountId string `json:"billingAccountId"`
 	PaymentToken     string `json:"paymentToken"`
 	UserId           string `json:"userId"`
+	UUID             string `json:"uuid"`
 	Plan             string `json:"plan"`
 	GitRepoName      string `json:"gitRepoName"`
 	GitRepoBranch    string `json:"gitRepoBranch"`
 	GitRepoUrl       string `json:"gitRepoUrl"`
+	IsCompany        bool   `json:"isCompany"`
+	CompanyName      string `json:"companyName"`
+	TaxId            string `json:"taxId"`
+	Phone            string `json:"phone"`
+	Email            string `json:"email"`
 }
 
 type ReqDataNewUser struct {
@@ -73,6 +81,15 @@ func (r *ReqData) Validate() error {
 	}
 	if r.UserId == "" {
 		return fmt.Errorf("user id is required")
+	}
+	if r.UUID == "" {
+		return fmt.Errorf("user uuid is required")
+	}
+	if r.BillingAccountId == "1" && r.Email == "" {
+		return fmt.Errorf("email is required")
+	}
+	if r.IsCompany && (r.CompanyName == "" || r.TaxId == "") {
+		return fmt.Errorf("company name and tax id are required")
 	}
 	return nil
 }
@@ -204,31 +221,36 @@ type RespDataCreateBillingAccount struct {
 }
 
 type ReqDataCreateBillingAccount struct {
-	BillingAdmins []struct {
-		UUID                string `json:"uuid"`
-		Email               string `json:"email"`
-		Phone_number        string `json:"phone_number"`
-		Name                string `json:"name"`
-		BillingAccountRefer string
-	} `json:"billingAdmins"`
-	Company struct {
-		IsCompany bool   `json:"isCompany"`
-		TaxId     string `json:"TaxId"`
-		Name      string `json:"name"`
-	} `json:"company"`
-	Projects []struct {
-		ProjectId         string    `json:"projectId"`
-		ClusterId         string    `json:"clusterId"`
-		CreationTimeStamp time.Time `json:"creationTimeStamp"`
-		State             string    `json:"State"`
-		Plan              string    `json:"accountType"`
-		History           []struct {
-			BillingDate         time.Time `json:"BillingDate" gorm:"primaryKey"`
-			PdfLink             string    `json:"pdfLink"`
-			Amount              float64   `json:"amount"`
-			ProjectRefer        string    `json:"ProjectRefer"`
-			BillingAccountRefer uint
-		} `json:"history" gorm:"foreignKey:ProjectRefer;references:ProjectId"`
-		BillingAccountRefer string `json:"BillingAccountUUID"`
-	} `json:"projects"`
+	BillingAdmins []Admin   `json:"billingAdmins"`
+	Company       Company   `json:"company"`
+	Projects      []Project `json:"projects"`
+}
+
+type Company struct {
+	IsCompany bool   `json:"isCompany"`
+	TaxId     string `json:"TaxId"`
+	Name      string `json:"name"`
+}
+
+type Admin struct {
+	UUID         string `json:"uuid"`
+	Email        string `json:"email"`
+	Phone_number string `json:"phone_number"`
+}
+
+type Project struct {
+	ProjectId         string    `json:"projectId"`
+	ClusterId         string    `json:"clusterId"`
+	CreationTimeStamp time.Time `json:"creationTimeStamp"`
+	State             string    `json:"State"`
+	Plan              string    `json:"accountType"`
+}
+
+type ReqDataAddProjectToBillingAccount struct {
+	BillingAccountUUID uuid.UUID `json:"billing_account_uuid"`
+	ProjectId          string    `json:"project_id"`
+	ClusterId          string    `json:"clusterId"`
+	CreationTimeStamp  time.Time `json:"creationTimeStamp"`
+	Plan               string    `json:"accountType"`
+	State              string    `json:"state"`
 }
