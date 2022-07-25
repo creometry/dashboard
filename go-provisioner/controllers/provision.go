@@ -36,34 +36,6 @@ func ProvisionProject(c *fiber.Ctx) error {
 	})
 }
 
-// func ProvisionProjectNewUser(c *fiber.Ctx) error {
-// 	// parse the request body
-// 	reqData := new(project.ReqDataNewUser)
-// 	if err := c.BodyParser(reqData); err != nil {
-// 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-// 			"error": err.Error(),
-// 		})
-// 	}
-// 	// check if the request body is valid
-// 	if err := reqData.Validate(); err != nil {
-// 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-// 			"error": err.Error(),
-// 		})
-// 	}
-
-// 	data, err := project.ProvisionProjectNewUser(*reqData)
-// 	if err != nil {
-// 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-// 			"error": err.Error(),
-// 		})
-// 	}
-// 	return c.JSON(fiber.Map{
-// 		"projectId": data.ProjectId,
-// 		"token":     data.Token,
-// 		"password":  data.Password,
-// 	})
-// }
-
 func GenerateKubeConfig(c *fiber.Ctx) error {
 	// get the token from the body
 	reqData := new(project.ReqDataKubeconfig)

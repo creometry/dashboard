@@ -2,9 +2,11 @@ package project
 
 import (
 	"fmt"
+	"time"
 )
 
 type ReqData struct {
+	// TODO: add billing account data and validte it
 	UsrProjectName   string `json:"projectName"`
 	BillingAccountId string `json:"billingAccountId"`
 	PaymentToken     string `json:"paymentToken"`
@@ -86,6 +88,9 @@ type CreateNsRespData struct {
 
 type RespData struct {
 	ProjectId string `json:"id"`
+	Created   string `json:"created"`
+	CreatedTS int64  `json:"createdTS"`
+	UUID      string `json:"uuid"`
 }
 
 type RespDataProvisionProject struct {
@@ -108,6 +113,7 @@ type RespDataRoleBinding struct {
 type RespDataCreateUser struct {
 	Id           string   `json:"id"`
 	PrincipalIds []string `json:"principalIds"`
+	UUID         string   `json:"uuid"`
 }
 
 type Kubeconfig struct {
@@ -121,6 +127,7 @@ type RespDataLogin struct {
 	Token        string `json:"token"`
 	Name         string `json:"name"`
 	Id           string `json:"userId"`
+	UUID         string `json:"uuid"`
 }
 
 type RespDataCreateGitRepo struct {
@@ -179,9 +186,7 @@ type RespDataUserByUserId struct {
 	Type     string `json:"type"`
 }
 
-type RespDataCreateBillingAccount struct {
-	Id string `json:"id"`
-}
+
 
 type CheckPaymeePaymentResponse struct {
 	Status  bool   `json:"status"`
@@ -194,4 +199,38 @@ type CheckPaymeePaymentResponse struct {
 		TransactionId int64   `json:"transaction_id"`
 		BuyerId       int64   `json:"buyer_id"`
 	}
+}
+
+type RespDataCreateBillingAccount struct {
+	Id string `json:"uuid"`
+}
+
+type ReqDataCreateBillingAccount struct {
+	BillingAdmins []struct {
+		UUID                string `json:"uuid"`
+		Email               string `json:"email"`
+		Phone_number        string `json:"phone_number"`
+		Name                string `json:"name"`
+		BillingAccountRefer string
+	} `json:"billingAdmins"`
+	Company struct {
+		IsCompany bool   `json:"isCompany"`
+		TaxId     string `json:"TaxId"`
+		Name      string `json:"name"`
+	} `json:"company"`
+	Projects []struct {
+		ProjectId         string    `json:"projectId"`
+		ClusterId         string    `json:"clusterId"`
+		CreationTimeStamp time.Time `json:"creationTimeStamp"`
+		State             string    `json:"State"`
+		Plan              string    `json:"accountType"`
+		History           []struct {
+			BillingDate         time.Time `json:"BillingDate" gorm:"primaryKey"`
+			PdfLink             string    `json:"pdfLink"`
+			Amount              float64   `json:"amount"`
+			ProjectRefer        string    `json:"ProjectRefer"`
+			BillingAccountRefer uint
+		} `json:"history" gorm:"foreignKey:ProjectRefer;references:ProjectId"`
+		BillingAccountRefer string `json:"BillingAccountUUID"`
+	} `json:"projects"`
 }

@@ -21,59 +21,6 @@ import (
 
 // Exportable functions
 
-// func ProvisionProjectNewUser(req ReqDataNewUser) (data RespDataProvisionProjectNewUser, err error) {
-// 	// create gitRepo
-// 	if req.GitRepoUrl != "" {
-// 		repoName, err := createGitRepo(req.GitRepoName, req.GitRepoUrl, req.GitRepoBranch)
-// 		if err != nil {
-// 			return RespDataProvisionProjectNewUser{}, err
-// 		}
-// 		fmt.Printf("Created repo : %s", repoName)
-// 	}
-// 	// create rancher project
-// 	projectId, err := createRancherProject(req.UsrProjectName, req.Plan)
-// 	if err != nil {
-// 		return RespDataProvisionProjectNewUser{}, err
-// 	}
-// 	// create random password
-// 	password := generateRandomString(12)
-
-// 	// create user
-// 	userId, _, err := createUser(req.Username, password)
-// 	if err != nil {
-// 		return RespDataProvisionProjectNewUser{}, err
-// 	}
-// 	// add user to project
-// 	_, err = AddUserToProject(userId, projectId)
-// 	if err != nil {
-// 		return RespDataProvisionProjectNewUser{}, err
-// 	}
-
-// 	// make post request to resources-service/namespace and pass the project name and id to create a namespace in the specific project
-// 	nsName, err := createNamespace(req.UsrProjectName, projectId)
-
-// 	if err != nil {
-// 		return RespDataProvisionProjectNewUser{}, err
-// 	}
-// 	fmt.Printf("Created namespace : %s", nsName)
-
-// 	// if I get the billing account id from the request, I need to add the project to the billing account, otherwise I need to create a new billing account and add the project to it
-
-// 	//login as user to get token
-// 	token, err := Login(req.Username, password)
-
-// 	if err != nil {
-// 		return RespDataProvisionProjectNewUser{}, err
-// 	}
-
-// 	resp := RespDataProvisionProjectNewUser{
-// 		ProjectId: projectId,
-// 		Token:     token,
-// 		Password:  password,
-// 	}
-// 	return resp, nil
-
-// }
 
 func ProvisionProject(req ReqData) (data RespDataProvisionProject, err error) {
 	// check paymee payment
@@ -94,6 +41,8 @@ func ProvisionProject(req ReqData) (data RespDataProvisionProject, err error) {
 	if err != nil {
 		return RespDataProvisionProject{}, err
 	}
+
+	// create billing account
 
 	// add user to project
 	_, err = AddUserToProject(req.UserId, projectId)
@@ -745,6 +694,7 @@ func createNamespace(projectName string, projectId string) (string, error) {
 	return newNs.Name, nil
 }
 
+// TODO: update this function
 func createBillingAccount(name string, userId string) (string, error) {
 	// change the request body
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s%s", os.Getenv("BILLING_URL"), "api/v1/billingaccounts"), bytes.NewBuffer([]byte(fmt.Sprintf(`{
