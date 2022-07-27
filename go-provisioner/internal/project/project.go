@@ -46,27 +46,26 @@ func ProvisionProject(req ReqData) (data RespDataProvisionProject, err error) {
 
 	// convert createdTS TO time.Time
 	t := time.Unix(0,createdTS)
-	log.Println(t)
 
-	// create billing account
-	// if req.BillingAccountId == "1" {
-	// 	// create billing account
-	// 	accountId, err := createBillingAccount(req, projectId, t)
-	// 	if err != nil {
-	// 	log.Print("err2: ", err)
-	// 		return RespDataProvisionProject{}, err
-	// 	}
-	// 	log.Println(accountId)
-	// } else {
-	// 	// convert string to uuid
-	// 	uid := uuid.MustParse(req.BillingAccountId)
-	// 	// add project to billing account
-	// 	prId, err := addProjectToBillingAccount(uid, projectId, t, req.Plan)
-	// 	if err != nil {
-	// 		return RespDataProvisionProject{}, err
-	// 	}
-	// 	log.Println(prId)
-	// }
+	//create billing account
+	if req.BillingAccountId == "1" {
+		// create billing account
+		accountId, err := createBillingAccount(req, projectId, t)
+		if err != nil {
+		log.Print("err2: ", err)
+			return RespDataProvisionProject{}, err
+		}
+		log.Println(accountId)
+	} else {
+		// convert string to uuid
+		uid := uuid.MustParse(req.BillingAccountId)
+		// add project to billing account
+		prId, err := addProjectToBillingAccount(uid, projectId, t, req.Plan)
+		if err != nil {
+			return RespDataProvisionProject{}, err
+		}
+		log.Println(prId)
+	}
 
 	// add user to project
 	_, err = AddUserToProject(req.UserId, projectId)
@@ -802,6 +801,8 @@ func createBillingAccount(req ReqData, projectId string, t time.Time) (string, e
 		},
 	}
 
+	log.Println("req: ",reqBody)
+
 	reqBodyJson, err := json.Marshal(reqBody)
 	if err != nil {
 		return "", err
@@ -821,6 +822,10 @@ func createBillingAccount(req ReqData, projectId string, t time.Time) (string, e
 
 	if err != nil {
 		return "", err
+	}
+
+	if resp.StatusCode != 201 {
+		return "", errors.New("billing account creation failed")
 	}
 
 	defer resp.Body.Close()
