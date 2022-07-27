@@ -1,3 +1,5 @@
 .env
 /bin
 /manifest/secrets.yaml
+/config
+/secrets

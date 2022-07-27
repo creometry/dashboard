@@ -39,31 +39,34 @@ func ProvisionProject(req ReqData) (data RespDataProvisionProject, err error) {
 	// create rancher project
 	projectId, createdTS, p_uuid, err := createRancherProject(req.UsrProjectName, req.Plan)
 	if err != nil {
+		log.Print("err1: ", err)
 		return RespDataProvisionProject{}, err
 	}
 	log.Println(p_uuid)
 
 	// convert createdTS TO time.Time
-	t := time.Unix(createdTS, 0)
+	t := time.Unix(0,createdTS)
+	log.Println(t)
 
 	// create billing account
-	if req.BillingAccountId == "1" {
-		// create billing account
-		accountId, err := createBillingAccount(req, projectId, t)
-		if err != nil {
-			return RespDataProvisionProject{}, err
-		}
-		log.Println(accountId)
-	} else {
-		// convert string to uuid
-		uid := uuid.MustParse(req.BillingAccountId)
-		// add project to billing account
-		prId, err := addProjectToBillingAccount(uid, projectId, t, req.Plan)
-		if err != nil {
-			return RespDataProvisionProject{}, err
-		}
-		log.Println(prId)
-	}
+	// if req.BillingAccountId == "1" {
+	// 	// create billing account
+	// 	accountId, err := createBillingAccount(req, projectId, t)
+	// 	if err != nil {
+	// 	log.Print("err2: ", err)
+	// 		return RespDataProvisionProject{}, err
+	// 	}
+	// 	log.Println(accountId)
+	// } else {
+	// 	// convert string to uuid
+	// 	uid := uuid.MustParse(req.BillingAccountId)
+	// 	// add project to billing account
+	// 	prId, err := addProjectToBillingAccount(uid, projectId, t, req.Plan)
+	// 	if err != nil {
+	// 		return RespDataProvisionProject{}, err
+	// 	}
+	// 	log.Println(prId)
+	// }
 
 	// add user to project
 	_, err = AddUserToProject(req.UserId, projectId)

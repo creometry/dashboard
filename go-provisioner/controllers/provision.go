@@ -147,7 +147,7 @@ func Login(c *fiber.Ctx) error {
 			"error": err.Error(),
 		})
 	}
-	token, id, uuid, err := project.Login(reqData.Username, reqData.Password)
+	id, token, uuid, err := project.Login(reqData.Username, reqData.Password)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),

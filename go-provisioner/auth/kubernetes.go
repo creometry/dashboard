@@ -5,6 +5,7 @@ import (
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	_ "k8s.io/client-go/tools/clientcmd"
 )
 
 var MyClientSet *kubernetes.Clientset
@@ -21,3 +22,20 @@ func CreateInClusterClient() {
 	}
 	MyClientSet = clientset
 }
+
+// del later
+// func CreateOutClusterClient() {
+
+// 	config, err := clientcmd.BuildConfigFromFlags("", "/home/seif/Documents/kubernetes/configs/observability.yaml")
+// 	if err != nil {
+// 		panic(err.Error())
+// 	}
+
+// 	// create the clientset
+// 	clientset, err := kubernetes.NewForConfig(config)
+// 	if err != nil {
+// 		panic(err.Error())
+// 	}
+
+// 	MyClientSet = clientset
+// }
