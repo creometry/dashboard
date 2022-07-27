@@ -28,14 +28,7 @@ func ProvisionProject(req ReqData) (data RespDataProvisionProject, err error) {
 	if err != nil {
 		return RespDataProvisionProject{}, err
 	}
-	// create gitRepo
-	if req.GitRepoUrl != "" {
-		repoName, err := createGitRepo(req.GitRepoName, req.GitRepoUrl, req.GitRepoBranch)
-		if err != nil {
-			return RespDataProvisionProject{}, err
-		}
-		fmt.Printf("Created repo : %s", repoName)
-	}
+	
 	// create rancher project
 	projectId, createdTS, p_uuid, err := createRancherProject(req.UsrProjectName, req.Plan)
 	if err != nil {
@@ -80,6 +73,15 @@ func ProvisionProject(req ReqData) (data RespDataProvisionProject, err error) {
 
 	if err != nil {
 		return RespDataProvisionProject{}, err
+	}
+
+	// create gitRepo
+	if req.GitRepoUrl != "" {
+		repoName, err := createGitRepo(req.GitRepoName, req.GitRepoUrl, req.GitRepoBranch)
+		if err != nil {
+			return RespDataProvisionProject{}, err
+		}
+		fmt.Printf("Created repo : %s", repoName)
 	}
 
 	// if I get the billing account id from the request, I need to add the project to the billing account, otherwise I need to create a new billing account and add the project to it
