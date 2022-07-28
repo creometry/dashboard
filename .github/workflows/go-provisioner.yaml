@@ -3,7 +3,7 @@ name: go-provisioner CI
 on:
   push:
     branches:
-      - update-actions
+      - "stable"
     tags:
       - "v*"
   pull_request:
