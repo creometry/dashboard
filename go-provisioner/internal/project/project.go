@@ -698,7 +698,7 @@ func createNamespace(projectName string, projectId string) (string, error) {
 
 	nsClient := auth.MyClientSet.CoreV1().Namespaces()
 
-	nsName := strings.ToLower(projectName) + "-" + generateRandomString(10)
+	nsName := strings.ToLower(projectName) + "-" + generateRandomString(20)
 
 	ns := &v1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
