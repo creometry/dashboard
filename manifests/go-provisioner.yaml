@@ -81,6 +81,7 @@ data:
   CLUSTER_ID: c-cgmb4
   RANCHER_URL: https://tn.cloud.creometry.com
   PAYMEE_URL: https://sandbox.paymee.tn
+  BILLING_URL: http://localhost:8080  
 kind: ConfigMap
 metadata:
   creationTimestamp: null

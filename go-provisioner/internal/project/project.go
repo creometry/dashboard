@@ -28,24 +28,22 @@ func ProvisionProject(req ReqData) (data RespDataProvisionProject, err error) {
 	if err != nil {
 		return RespDataProvisionProject{}, err
 	}
-	
+
 	// create rancher project
 	projectId, createdTS, p_uuid, err := createRancherProject(req.UsrProjectName, req.Plan)
 	if err != nil {
-		log.Print("err1: ", err)
 		return RespDataProvisionProject{}, err
 	}
 	log.Println(p_uuid)
 
-	// convert createdTS TO time.Time
-	t := time.Unix(0,createdTS)
+	// convert createdTS to time.Time
+	t := time.Unix(0, createdTS)
 
 	//create billing account
 	if req.BillingAccountId == "1" {
 		// create billing account
 		accountId, err := createBillingAccount(req, projectId, t)
 		if err != nil {
-		log.Print("err2: ", err)
 			return RespDataProvisionProject{}, err
 		}
 		log.Println(accountId)
@@ -66,7 +64,7 @@ func ProvisionProject(req ReqData) (data RespDataProvisionProject, err error) {
 		return RespDataProvisionProject{}, err
 	}
 
-	// make post request to resources-service/namespace and pass the project name and id to create a namespace in the specific project
+	// create k8s namespace
 	nsName, err := createNamespace(req.UsrProjectName, projectId)
 
 	fmt.Printf("Created namespace : %s", nsName)
@@ -76,15 +74,13 @@ func ProvisionProject(req ReqData) (data RespDataProvisionProject, err error) {
 	}
 
 	// create gitRepo
-	if req.GitRepoUrl != "" {
+	if req.GitRepoUrl != "" && req.GitRepoBranch != "" && req.GitRepoName != "" {
 		repoName, err := createGitRepo(req.GitRepoName, req.GitRepoUrl, req.GitRepoBranch)
 		if err != nil {
 			return RespDataProvisionProject{}, err
 		}
 		fmt.Printf("Created repo : %s", repoName)
 	}
-
-	// if I get the billing account id from the request, I need to add the project to the billing account, otherwise I need to create a new billing account and add the project to it
 
 	resp := RespDataProvisionProject{
 		ProjectId: projectId,
@@ -803,7 +799,6 @@ func createBillingAccount(req ReqData, projectId string, t time.Time) (string, e
 		},
 	}
 
-	log.Println("req: ",reqBody)
 
 	reqBodyJson, err := json.Marshal(reqBody)
 	if err != nil {
