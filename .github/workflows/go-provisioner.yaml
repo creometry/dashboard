@@ -4,6 +4,11 @@ on:
   push:
     branches:
       - update-actions
+    tags:
+      - "v*"
+  pull_request:
+    branches:
+      - "stable"
 
 jobs:
   # test:
@@ -18,14 +23,37 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: mr-smithers-excellent/docker-build-push@v5
-        name: Build & push Docker image
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v4
         with:
-          image: creometry/go-provisioner
-          tags: v0.0.1
-          dockerfile: go-provisioner/Dockerfile
-          registry: docker.io
-          directory: go-provisioner
+          images: |
+            creometry/go-provisioner
+          tags: |
+            type=semver,pattern={{version}}
+      - name: Login to DockerHub
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v2
+        with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+      - name: Build and push
+        uses: docker/build-push-action@v3
+        with:
+          context: ./go-provisioner
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      # - uses: mr-smithers-excellent/docker-build-push@v5
+      #   name: Build & push Docker image
+      #   with:
+      #     image: creometry/go-provisioner
+      #     tags: v0.0.1
+      #     dockerfile: go-provisioner/Dockerfile
+      #     registry: docker.io
+      #     directory: go-provisioner
+      #     username: ${{ secrets.DOCKER_HUB_USERNAME }}
+      #     password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
