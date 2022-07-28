@@ -36,34 +36,6 @@ func ProvisionProject(c *fiber.Ctx) error {
 	})
 }
 
-// func ProvisionProjectNewUser(c *fiber.Ctx) error {
-// 	// parse the request body
-// 	reqData := new(project.ReqDataNewUser)
-// 	if err := c.BodyParser(reqData); err != nil {
-// 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-// 			"error": err.Error(),
-// 		})
-// 	}
-// 	// check if the request body is valid
-// 	if err := reqData.Validate(); err != nil {
-// 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-// 			"error": err.Error(),
-// 		})
-// 	}
-
-// 	data, err := project.ProvisionProjectNewUser(*reqData)
-// 	if err != nil {
-// 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-// 			"error": err.Error(),
-// 		})
-// 	}
-// 	return c.JSON(fiber.Map{
-// 		"projectId": data.ProjectId,
-// 		"token":     data.Token,
-// 		"password":  data.Password,
-// 	})
-// }
-
 func GenerateKubeConfig(c *fiber.Ctx) error {
 	// get the token from the body
 	reqData := new(project.ReqDataKubeconfig)
@@ -175,7 +147,7 @@ func Login(c *fiber.Ctx) error {
 			"error": err.Error(),
 		})
 	}
-	token, id, err := project.Login(reqData.Username, reqData.Password)
+	id, token, uuid, err := project.Login(reqData.Username, reqData.Password)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
@@ -184,6 +156,7 @@ func Login(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{
 		"token":  token,
 		"userId": id,
+		"uuid":   uuid,
 	})
 }
 
@@ -201,14 +174,14 @@ func Register(c *fiber.Ctx) error {
 			"error": "username is required",
 		})
 	}
-	id, token, password, err := project.Register(reqData.Username)
+	id, token, password, uuid, err := project.Register(reqData.Username)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
 		})
 	}
 
-	if token == "" || id == "" || password == "" {
+	if token == "" || id == "" || password == "" || uuid == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "error registering user",
 		})
@@ -218,5 +191,6 @@ func Register(c *fiber.Ctx) error {
 		"token":    token,
 		"userId":   id,
 		"password": password,
+		"uuid":     uuid,
 	})
 }

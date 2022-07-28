@@ -10,70 +10,17 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
-	"os"
 	"strings"
+	"time"
 
 	"github.com/Creometry/dashboard/go-provisioner/auth"
 	"github.com/Creometry/dashboard/go-provisioner/utils"
+	"github.com/google/uuid"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // Exportable functions
-
-// func ProvisionProjectNewUser(req ReqDataNewUser) (data RespDataProvisionProjectNewUser, err error) {
-// 	// create gitRepo
-// 	if req.GitRepoUrl != "" {
-// 		repoName, err := createGitRepo(req.GitRepoName, req.GitRepoUrl, req.GitRepoBranch)
-// 		if err != nil {
-// 			return RespDataProvisionProjectNewUser{}, err
-// 		}
-// 		fmt.Printf("Created repo : %s", repoName)
-// 	}
-// 	// create rancher project
-// 	projectId, err := createRancherProject(req.UsrProjectName, req.Plan)
-// 	if err != nil {
-// 		return RespDataProvisionProjectNewUser{}, err
-// 	}
-// 	// create random password
-// 	password := generateRandomString(12)
-
-// 	// create user
-// 	userId, _, err := createUser(req.Username, password)
-// 	if err != nil {
-// 		return RespDataProvisionProjectNewUser{}, err
-// 	}
-// 	// add user to project
-// 	_, err = AddUserToProject(userId, projectId)
-// 	if err != nil {
-// 		return RespDataProvisionProjectNewUser{}, err
-// 	}
-
-// 	// make post request to resources-service/namespace and pass the project name and id to create a namespace in the specific project
-// 	nsName, err := createNamespace(req.UsrProjectName, projectId)
-
-// 	if err != nil {
-// 		return RespDataProvisionProjectNewUser{}, err
-// 	}
-// 	fmt.Printf("Created namespace : %s", nsName)
-
-// 	// if I get the billing account id from the request, I need to add the project to the billing account, otherwise I need to create a new billing account and add the project to it
-
-// 	//login as user to get token
-// 	token, err := Login(req.Username, password)
-
-// 	if err != nil {
-// 		return RespDataProvisionProjectNewUser{}, err
-// 	}
-
-// 	resp := RespDataProvisionProjectNewUser{
-// 		ProjectId: projectId,
-// 		Token:     token,
-// 		Password:  password,
-// 	}
-// 	return resp, nil
-
-// }
 
 func ProvisionProject(req ReqData) (data RespDataProvisionProject, err error) {
 	// check paymee payment
@@ -81,18 +28,34 @@ func ProvisionProject(req ReqData) (data RespDataProvisionProject, err error) {
 	if err != nil {
 		return RespDataProvisionProject{}, err
 	}
-	// create gitRepo
-	if req.GitRepoUrl != "" {
-		repoName, err := createGitRepo(req.GitRepoName, req.GitRepoUrl, req.GitRepoBranch)
+
+	// create rancher project
+	projectId, createdTS, p_uuid, err := createRancherProject(req.UsrProjectName, req.Plan)
+	if err != nil {
+		return RespDataProvisionProject{}, err
+	}
+	log.Println(p_uuid)
+
+	// convert createdTS to time.Time
+	t := time.Unix(0, createdTS)
+
+	//create billing account
+	if req.BillingAccountId == "1" {
+		// create billing account
+		accountId, err := createBillingAccount(req, projectId, t)
 		if err != nil {
 			return RespDataProvisionProject{}, err
 		}
-		fmt.Printf("Created repo : %s", repoName)
-	}
-	// create rancher project
-	projectId, err := createRancherProject(req.UsrProjectName, req.Plan)
-	if err != nil {
-		return RespDataProvisionProject{}, err
+		log.Println(accountId)
+	} else {
+		// convert string to uuid
+		uid := uuid.MustParse(req.BillingAccountId)
+		// add project to billing account
+		prId, err := addProjectToBillingAccount(uid, projectId, t, req.Plan)
+		if err != nil {
+			return RespDataProvisionProject{}, err
+		}
+		log.Println(prId)
 	}
 
 	// add user to project
@@ -101,7 +64,7 @@ func ProvisionProject(req ReqData) (data RespDataProvisionProject, err error) {
 		return RespDataProvisionProject{}, err
 	}
 
-	// make post request to resources-service/namespace and pass the project name and id to create a namespace in the specific project
+	// create k8s namespace
 	nsName, err := createNamespace(req.UsrProjectName, projectId)
 
 	fmt.Printf("Created namespace : %s", nsName)
@@ -110,7 +73,14 @@ func ProvisionProject(req ReqData) (data RespDataProvisionProject, err error) {
 		return RespDataProvisionProject{}, err
 	}
 
-	// if I get the billing account id from the request, I need to add the project to the billing account, otherwise I need to create a new billing account and add the project to it
+	// create gitRepo
+	if req.GitRepoUrl != "" && req.GitRepoBranch != "" && req.GitRepoName != "" {
+		repoName, err := createGitRepo(req.GitRepoName, req.GitRepoUrl, req.GitRepoBranch)
+		if err != nil {
+			return RespDataProvisionProject{}, err
+		}
+		fmt.Printf("Created repo : %s", repoName)
+	}
 
 	resp := RespDataProvisionProject{
 		ProjectId: projectId,
@@ -304,16 +274,16 @@ func GetUserByUsername(username string) (string, []string, error) {
 
 }
 
-func Login(username string, password string) (string, string, error) {
+func Login(username string, password string) (string, string, string, error) {
 
 	rancherURL, err := utils.GetVariable("config", "RANCHER_URL")
 	if err != nil {
-		return "", "", err
+		return "", "", "", err
 	}
 
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s%s", rancherURL, "/v3-public/localProviders/local?action=login"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"username":"%s","password":"%s"}`, username, password))))
 	if err != nil {
-		return "", "", err
+		return "", "", "", err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -323,7 +293,7 @@ func Login(username string, password string) (string, string, error) {
 	resp, err := client.Do(req)
 
 	if err != nil {
-		return "", "", err
+		return "", "", "", err
 	}
 	defer resp.Body.Close()
 
@@ -331,34 +301,34 @@ func Login(username string, password string) (string, string, error) {
 	dt := RespDataLogin{}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return "", "", err
+		return "", "", "", err
 	}
 	err = json.Unmarshal(body, &dt)
 	if err != nil {
-		return "", "", err
+		return "", "", "", err
 	}
 
-	return dt.Id, dt.Token, nil
+	return dt.Id, dt.Token, dt.UUID, nil
 
 }
 
-func Register(username string) (string, string, string, error) {
+func Register(username string) (string, string, string, string, error) {
 
 	rancherURL, err := utils.GetVariable("config", "RANCHER_URL")
 	if err != nil {
-		return "", "", "", err
+		return "", "", "", "", err
 	}
 
 	rancherToken, err := utils.GetVariable("secrets", "RANCHER_TOKEN")
 	if err != nil {
-		return "", "", "", err
+		return "", "", "", "", err
 	}
 
 	password := generateRandomString(16)
 
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s%s", rancherURL, "/v3/users"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"username":"%s","mustChangePassword": true,"password": "%s","enabled": true,"type":"user"}`, username, password))))
 	if err != nil {
-		return "", "", "", err
+		return "", "", "", "", err
 	}
 
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", rancherToken))
@@ -368,7 +338,7 @@ func Register(username string) (string, string, string, error) {
 	resp, err := client.Do(req)
 
 	if err != nil {
-		return "", "", "", err
+		return "", "", "", "", err
 	}
 
 	defer resp.Body.Close()
@@ -377,53 +347,53 @@ func Register(username string) (string, string, string, error) {
 	dt := RespDataCreateUser{}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return "", "", "", err
+		return "", "", "", "", err
 	}
 	err = json.Unmarshal(body, &dt)
 	if err != nil {
-		return "", "", "", err
+		return "", "", "", "", err
 	}
 
 	err = createGlobalRoleBinding(dt.Id)
 
 	if err != nil {
-		return "", "", "", err
+		return "", "", "", "", err
 	}
 	// login user
-	id, token, err := Login(username, password)
+	id, token, uuid, err := Login(username, password)
 	if err != nil {
-		return "", "", "", err
+		return "", "", "", "", err
 	}
 
-	return id, token, password, nil
+	return id, token, password, uuid, nil
 }
 
 // Local functions
 
-func createRancherProject(usrProjectName string, plan string) (string, error) {
+func createRancherProject(usrProjectName string, plan string) (string, int64, string, error) {
 	resourceQuota := genResourceQuotaFromPlan(plan)
 	if resourceQuota == "nil" {
-		return "", fmt.Errorf("invalid plan")
+		return "", 0, "", fmt.Errorf("invalid plan")
 	}
 
 	clusterId, err := utils.GetVariable("config", "CLUSTER_ID")
 	if err != nil {
-		return "", err
+		return "", 0, "", err
 	}
 
 	rancherURL, err := utils.GetVariable("config", "RANCHER_URL")
 	if err != nil {
-		return "", err
+		return "", 0, "", err
 	}
 
 	rancherToken, err := utils.GetVariable("secrets", "RANCHER_TOKEN")
 	if err != nil {
-		return "", err
+		return "", 0, "", err
 	}
 
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s%s", rancherURL, "/v3/projects"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"name":"%s","clusterId":"%s",%s}`, usrProjectName, clusterId, resourceQuota))))
 	if err != nil {
-		return "", err
+		return "", 0, "", err
 	}
 
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", rancherToken))
@@ -432,7 +402,7 @@ func createRancherProject(usrProjectName string, plan string) (string, error) {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", err
+		return "", 0, "", err
 	}
 
 	defer resp.Body.Close()
@@ -447,7 +417,7 @@ func createRancherProject(usrProjectName string, plan string) (string, error) {
 		log.Fatal(err)
 	}
 
-	return dt.ProjectId, nil
+	return dt.ProjectId, dt.CreatedTS, dt.UUID, nil
 }
 
 func createGlobalRoleBinding(id string) error {
@@ -724,7 +694,7 @@ func createNamespace(projectName string, projectId string) (string, error) {
 
 	nsClient := auth.MyClientSet.CoreV1().Namespaces()
 
-	nsName := strings.ToLower(projectName) + "-" + generateRandomString(10)
+	nsName := strings.ToLower(projectName) + "-" + generateRandomString(20)
 
 	ns := &v1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
@@ -743,46 +713,6 @@ func createNamespace(projectName string, projectId string) (string, error) {
 		return "", err
 	}
 	return newNs.Name, nil
-}
-
-func createBillingAccount(name string, userId string) (string, error) {
-	// change the request body
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s%s", os.Getenv("BILLING_URL"), "api/v1/billingaccounts"), bytes.NewBuffer([]byte(fmt.Sprintf(`{
-		"type": "billingaccount",
-		"metadata": {
-		  "name": "%s"
-		},
-		"spec": {
-		  "externalId": "%s"
-		}
-	  }`, name, name))))
-
-	if err != nil {
-		return "", err
-	}
-
-	client := &http.Client{}
-
-	resp, err := client.Do(req)
-
-	if err != nil {
-		return "", err
-	}
-
-	defer resp.Body.Close()
-
-	// parse response body
-	dt := RespDataCreateBillingAccount{}
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
-	err = json.Unmarshal(body, &dt)
-	if err != nil {
-		return "", err
-	}
-
-	return dt.Id, nil
 }
 
 func checkPayment(token string) (CheckPaymeePaymentResponse, error) {
@@ -827,4 +757,147 @@ func checkPayment(token string) (CheckPaymeePaymentResponse, error) {
 	}
 
 	return dt, nil
+}
+
+func createBillingAccount(req ReqData, projectId string, t time.Time) (string, error) {
+	billingURL, err := utils.GetVariable("config", "BILLING_URL")
+	if err != nil {
+		return "", err
+	}
+
+	clId := strings.Split(projectId, ":")[0]
+	prId := strings.Split(projectId, ":")[1]
+
+	companyName := ""
+	taxId := ""
+
+	if req.IsCompany {
+		companyName = req.CompanyName
+		taxId = req.TaxId
+	}
+	reqBody := ReqDataCreateBillingAccount{
+		Company: Company{
+			IsCompany: req.IsCompany,
+			TaxId:     taxId,
+			Name:      companyName,
+		},
+		BillingAdmins: []Admin{
+			{
+				UUID:         req.UUID,
+				Email:        req.Email,
+				Phone_number: req.Phone,
+			},
+		},
+		Projects: []Project{
+			{
+				ProjectId:         prId,
+				ClusterId:         clId,
+				CreationTimeStamp: t,
+				State:             "active",
+				Plan:              req.Plan,
+			},
+		},
+	}
+
+
+	reqBodyJson, err := json.Marshal(reqBody)
+	if err != nil {
+		return "", err
+	}
+
+	r, err := http.NewRequest("POST", fmt.Sprintf("%s/v1/CreateBillingAccount", billingURL), bytes.NewBuffer(reqBodyJson))
+
+	if err != nil {
+		return "", err
+	}
+
+	r.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+
+	resp, err := client.Do(r)
+
+	if err != nil {
+		return "", err
+	}
+
+	if resp.StatusCode != 201 {
+		return "", errors.New("billing account creation failed")
+	}
+
+	defer resp.Body.Close()
+
+	// parse response body
+	dt := RespDataCreateBillingAccount{}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	err = json.Unmarshal(body, &dt)
+
+	if err != nil {
+		return "", err
+	}
+
+	return dt.Id, nil
+
+}
+
+func addProjectToBillingAccount(billingAccountId uuid.UUID, projectId string, t time.Time, plan string) (string, error) {
+	billingURL, err := utils.GetVariable("config", "BILLING_URL")
+	if err != nil {
+		return "", err
+	}
+
+	clId := strings.Split(projectId, ":")[0]
+	prId := strings.Split(projectId, ":")[1]
+
+	reqBody := &ReqDataAddProjectToBillingAccount{
+		BillingAccountUUID: billingAccountId,
+		ProjectId:          prId,
+		ClusterId:          clId,
+		CreationTimeStamp:  t,
+		Plan:               plan,
+		State:              "active",
+	}
+
+	b, err := json.Marshal(reqBody)
+	if err != nil {
+		return "", err
+	}
+
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s%s", billingURL, "/v1/addproject"), bytes.NewBuffer(b))
+
+	if err != nil {
+		return "", err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+
+	resp, err := client.Do(req)
+
+	if err != nil {
+		return "", err
+	}
+
+	defer resp.Body.Close()
+
+	// parse response body
+	dt := RespDataProvisionProject{}
+	body, err := ioutil.ReadAll(resp.Body)
+
+	if err != nil {
+		return "", err
+	}
+	err = json.Unmarshal(body, &dt)
+
+	if err != nil {
+		return "", err
+	}
+
+	return dt.ProjectId, nil
 }
