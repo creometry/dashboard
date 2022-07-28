@@ -24,7 +24,7 @@ jobs:
             creometry/go-provisioner
           tags: |
             type=semver,pattern=v{{version}}
-      - name: DockerHub Login
+      - name: Login to DockerHub
         if: github.event_name != 'pull_request'
         uses: docker/login-action@v2
         with:
