@@ -23,6 +23,8 @@ jobs:
           images: |
             creometry/go-provisioner
           tags: |
+            type=ref,event=branch
+            type=ref,event=pr
             type=semver,pattern=v{{version}}
       - name: Login to DockerHub.
         if: github.event_name != 'pull_request'
