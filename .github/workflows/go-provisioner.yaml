@@ -5,7 +5,7 @@ on:
     branches:
       - update-actions
     tags:
-      - "v**"
+      - v**
   pull_request:
     branches:
       - "stable"
