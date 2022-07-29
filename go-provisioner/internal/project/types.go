@@ -254,3 +254,24 @@ type ReqDataAddProjectToBillingAccount struct {
 	Plan               string    `json:"plan"`
 	State              string    `json:"state"`
 }
+
+const (
+	STARTER   = "Starter"
+	PRO       = "Pro"
+	ELITE     = "Elite"
+	PAYPERUSE = "PayPerUse"
+)
+
+type Limit struct {
+	ConfigMaps             int
+	LimitsCpu              string
+	LimitsMemory           string
+	PersistentVolumeClaims int
+	Pods                   int
+	ReplicationControllers int
+	RequestsStorage        string
+	Secrets                int
+	Services               int
+	ServicesLoadBalancers  int
+	ServicesNodePorts      int
+}
