@@ -6,7 +6,7 @@ import (
 
 	"github.com/Creometry/dashboard/go-provisioner/internal/project"
 	"github.com/Creometry/dashboard/go-provisioner/internal/team"
-	"github.com/Creometry/dashboard/go-provisioner/utils"
+	"github.com/Seifbarouni/fast-utils/utils"
 	"github.com/gofiber/fiber/v2"
 )
 

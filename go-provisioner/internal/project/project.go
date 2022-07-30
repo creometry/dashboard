@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/Creometry/dashboard/go-provisioner/auth"
-	"github.com/Creometry/dashboard/go-provisioner/utils"
+	"github.com/Seifbarouni/fast-utils/utils"
 	"github.com/google/uuid"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
