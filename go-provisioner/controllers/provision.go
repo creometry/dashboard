@@ -185,3 +185,29 @@ func Register(c *fiber.Ctx) error {
 		"message": "Email sent",
 	})
 }
+
+func ResetPassword(c *fiber.Ctx) error {
+	// get the token from the body
+	reqData := new(project.ReqDataResetPassword)
+	if err := c.BodyParser(reqData); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+	// check if the request body is valid
+	if err:=reqData.Validate() ;err!= nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err,
+		})
+	}
+	err := project.ResetPassword(reqData.UserId, reqData.Email, reqData.NewPassword)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"message": "Email sent",
+	})
+}

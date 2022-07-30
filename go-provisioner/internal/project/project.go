@@ -324,6 +324,11 @@ func Register(username,email string) (error) {
 		return err
 	}
 
+	creometryGmail, err := utils.GetVariable("config", "CREOMETRY_GMAIL")
+	if err != nil {
+		return err
+	}
+
 	gmailPassword, err := utils.GetVariable("secrets", "GMAIL_PASSWORD")
 	if err != nil {
 		return err
@@ -366,13 +371,78 @@ func Register(username,email string) (error) {
 	}
 	// send email
 	err = utils.SendEmail(
-		// needs to be changed to the actual email address of creometry
-		"seif.barouni11@gmail.com",
+		creometryGmail,
 		email,
 		// needs to be changed to the actual creometry gmail password
 		gmailPassword,
 		"Creometry Registration",
 		fmt.Sprintf("Password: %s\nYou can use this password to log in to Creometry and Rancher dashboards.",password),
+	)
+
+	if err != nil {
+		return err
+	}
+	
+	return nil
+}
+
+func ResetPassword(userId,email,newPassword string) error{
+
+	rancherURL, err := utils.GetVariable("config", "RANCHER_URL")
+	if err != nil {
+		return err
+	}
+
+	rancherToken, err := utils.GetVariable("secrets", "RANCHER_TOKEN")
+	if err != nil {
+		return err
+	}
+
+	creometryGmail, err := utils.GetVariable("config", "CREOMETRY_GMAIL")
+	if err != nil {
+		return err
+	}
+
+	gmailPassword, err := utils.GetVariable("secrets", "GMAIL_PASSWORD")
+	if err != nil {
+		return err
+	}
+
+	var password string
+	if newPassword == "" {
+		password = generateRandomString(16)
+	} else {
+		password = newPassword
+	}
+
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s%s%s?action=setpassword", rancherURL, "/v3/users/",userId), bytes.NewBuffer([]byte(fmt.Sprintf(`{"newPassword":"%s"}`,password))))
+
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", rancherToken))
+
+	client := &http.Client{}
+
+	resp, err := client.Do(req)
+
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode != 200 {
+		return errors.New("error resetting password")
+	}
+
+	// send email
+	err = utils.SendEmail(
+		creometryGmail,
+		email,
+		// needs to be changed to the actual creometry gmail password
+		gmailPassword,
+		"Creometry Password Reset",
+		"Your password has been reset successfully.",
 	)
 
 	if err != nil {
