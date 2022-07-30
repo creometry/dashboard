@@ -312,23 +312,28 @@ func Login(username string, password string) (string, string, string, error) {
 
 }
 
-func Register(username string) (string, string, string, string, error) {
+func Register(username,email string) (error) {
 
 	rancherURL, err := utils.GetVariable("config", "RANCHER_URL")
 	if err != nil {
-		return "", "", "", "", err
+		return err
 	}
 
 	rancherToken, err := utils.GetVariable("secrets", "RANCHER_TOKEN")
 	if err != nil {
-		return "", "", "", "", err
+		return err
+	}
+
+	gmailPassword, err := utils.GetVariable("secrets", "GMAIL_PASSWORD")
+	if err != nil {
+		return err
 	}
 
 	password := generateRandomString(16)
 
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s%s", rancherURL, "/v3/users"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"username":"%s","mustChangePassword": true,"password": "%s","enabled": true,"type":"user"}`, username, password))))
 	if err != nil {
-		return "", "", "", "", err
+		return err
 	}
 
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", rancherToken))
@@ -338,7 +343,7 @@ func Register(username string) (string, string, string, string, error) {
 	resp, err := client.Do(req)
 
 	if err != nil {
-		return "", "", "", "", err
+		return err
 	}
 
 	defer resp.Body.Close()
@@ -347,25 +352,34 @@ func Register(username string) (string, string, string, string, error) {
 	dt := RespDataCreateUser{}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return "", "", "", "", err
+		return err
 	}
 	err = json.Unmarshal(body, &dt)
 	if err != nil {
-		return "", "", "", "", err
+		return err
 	}
 
 	err = createGlobalRoleBinding(dt.Id)
 
 	if err != nil {
-		return "", "", "", "", err
+		return err
 	}
-	// login user
-	id, token, uuid, err := Login(username, password)
-	if err != nil {
-		return "", "", "", "", err
-	}
+	// send email
+	err = utils.SendEmail(
+		// needs to be changed to the actual email address of creometry
+		"seif.barouni11@gmail.com",
+		email,
+		// needs to be changed to the actual creometry gmail password
+		gmailPassword,
+		"Creometry Registration",
+		fmt.Sprintf("Password: %s\nYou can use this password to log in to Creometry and Rancher dashboards.",password),
+	)
 
-	return id, token, password, uuid, nil
+	if err != nil {
+		return err
+	}
+	
+	return nil
 }
 
 // Local functions

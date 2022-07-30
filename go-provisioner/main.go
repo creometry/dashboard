@@ -11,8 +11,8 @@ import (
 
 func main() {
 
-	auth.CreateInClusterClient()
-	//auth.CreateOutClusterClient()
+	//auth.CreateInClusterClient()
+	auth.CreateOutClusterClient()
 	app := fiber.New()
 
 	app.Use(cors.New())

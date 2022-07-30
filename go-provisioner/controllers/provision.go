@@ -174,23 +174,14 @@ func Register(c *fiber.Ctx) error {
 			"error": "username is required",
 		})
 	}
-	id, token, password, uuid, err := project.Register(reqData.Username)
+	err := project.Register(reqData.Username, reqData.Email)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
 		})
 	}
 
-	if token == "" || id == "" || password == "" || uuid == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "error registering user",
-		})
-	}
-
 	return c.JSON(fiber.Map{
-		"token":    token,
-		"userId":   id,
-		"password": password,
-		"uuid":     uuid,
+		"message": "Email sent",
 	})
 }

@@ -41,6 +41,7 @@ type ReqDataLogin struct {
 
 type ReqDataRegister struct {
 	Username string `json:"username"`
+	Email   string `json:"email"`
 }
 
 func (r *ReqDataLogin) Validate() error {
