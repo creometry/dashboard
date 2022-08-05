@@ -256,6 +256,28 @@ type ReqDataAddProjectToBillingAccount struct {
 	State              string    `json:"state"`
 }
 
+
+const (
+	STARTER   = "Starter"
+	PRO       = "Pro"
+	ELITE     = "Elite"
+	PAYPERUSE = "PayPerUse"
+)
+
+type Limit struct {
+	ConfigMaps             int
+	LimitsCpu              string
+	LimitsMemory           string
+	PersistentVolumeClaims int
+	Pods                   int
+	ReplicationControllers int
+	RequestsStorage        string
+	Secrets                int
+	Services               int
+	ServicesLoadBalancers  int
+	ServicesNodePorts      int
+}
+
 type ReqDataResetPassword struct {
 	UserId string `json:"userId"`
 	Email string `json:"email"`
@@ -271,3 +293,4 @@ func (r *ReqDataResetPassword) Validate() error {
 	}
 	return nil
 }
+

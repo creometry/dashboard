@@ -455,10 +455,11 @@ func ResetPassword(userId,email,newPassword string) error{
 // Local functions
 
 func createRancherProject(usrProjectName string, plan string) (string, int64, string, error) {
-	resourceQuota := genResourceQuotaFromPlan(plan)
-	if resourceQuota == "nil" {
+	nsDefaultResourceQuotaLimit,resourceQuotaLimit := genLimitsFromPlan(plan)
+	if nsDefaultResourceQuotaLimit == nil && resourceQuotaLimit == nil {
 		return "", 0, "", fmt.Errorf("invalid plan")
 	}
+	resourceQuota := genResourceQuota(*nsDefaultResourceQuotaLimit, *resourceQuotaLimit)
 
 	clusterId, err := utils.GetVariable("config", "CLUSTER_ID")
 	if err != nil {
@@ -549,109 +550,54 @@ func createGlobalRoleBinding(id string) error {
 	return nil
 }
 
-func genResourceQuotaFromPlan(plan string) string {
+func genResourceQuota(nsDefaultResourceQuotaLimit Limit, resourceQuota Limit) string {
+
+	return fmt.Sprintf(`
+	"namespaceDefaultResourceQuota": {
+		"limit": {
+		"configMaps": "%d",
+		"limitsCpu": "%s",
+		"limitsMemory": "%s",
+		"persistentVolumeClaims": "%d",
+		"pods": "%d",
+		"replicationControllers": "%d",
+		"requestsStorage": "%s",
+		"secrets": "%d",
+		"services": "%d",
+		"servicesLoadBalancers": "%d",
+		"servicesNodePorts": "%d"
+		}
+		},
+		"resourceQuota": {
+		"limit": {
+		"configMaps": "%d",
+		"limitsCpu": "%s",
+		"limitsMemory": "%s",
+		"persistentVolumeClaims": "%d",
+		"pods": "%d",
+		"replicationControllers": "%d",
+		"requestsStorage": "%s",
+		"secrets": "%d",
+		"services": "%d",
+		"servicesLoadBalancers": "%d",
+		"servicesNodePorts": "%d"
+		},
+		"usedLimit": { }
+		}
+	`, nsDefaultResourceQuotaLimit.ConfigMaps, nsDefaultResourceQuotaLimit.LimitsCpu, nsDefaultResourceQuotaLimit.LimitsMemory, nsDefaultResourceQuotaLimit.PersistentVolumeClaims, nsDefaultResourceQuotaLimit.Pods, nsDefaultResourceQuotaLimit.ReplicationControllers, nsDefaultResourceQuotaLimit.RequestsStorage, nsDefaultResourceQuotaLimit.Secrets, nsDefaultResourceQuotaLimit.Services, nsDefaultResourceQuotaLimit.ServicesLoadBalancers, nsDefaultResourceQuotaLimit.ServicesNodePorts, resourceQuota.ConfigMaps, resourceQuota.LimitsCpu, resourceQuota.LimitsMemory, resourceQuota.PersistentVolumeClaims, resourceQuota.Pods, resourceQuota.ReplicationControllers, resourceQuota.RequestsStorage, resourceQuota.Secrets, resourceQuota.Services, resourceQuota.ServicesLoadBalancers, resourceQuota.ServicesNodePorts)
+}
+
+func genLimitsFromPlan(plan string) (*Limit, *Limit) {
 	switch plan {
-	case "Starter":
-		return `"namespaceDefaultResourceQuota": {
-			"limit": {
-			"configMaps": "10",
-			"limitsCpu": "1000m",
-			"limitsMemory": "2000Mi",
-			"persistentVolumeClaims": "10",
-			"pods": "50",
-			"replicationControllers": "15",
-			"requestsStorage": "50000Mi",
-			"secrets": "20",
-			"services": "50",
-			"servicesLoadBalancers": "0",
-			"servicesNodePorts": "0"
-			}
-			},
-			"resourceQuota": {
-			"limit": {
-			"configMaps": "10",
-			"limitsCpu": "1000m",
-			"limitsMemory": "2000Mi",
-			"persistentVolumeClaims": "10",
-			"pods": "100",
-			"replicationControllers": "30",
-			"requestsStorage": "50000Mi",
-			"secrets": "20",
-			"services": "50",
-			"servicesLoadBalancers": "0",
-			"servicesNodePorts": "0"
-			},
-			"usedLimit": { }
-			}
-		`
-	case "Pro":
-		return `"namespaceDefaultResourceQuota": {
-			"limit": {
-			"configMaps": "20",
-			"limitsCpu": "2000m",
-			"limitsMemory": "4000Mi",
-			"persistentVolumeClaims": "20",
-			"pods": "100",
-			"replicationControllers": "25",
-			"requestsStorage": "50000Mi",
-			"secrets": "20",
-			"services": "50",
-			"servicesLoadBalancers": "0",
-			"servicesNodePorts": "0"
-			}
-			},
-			"resourceQuota": {
-			"limit": {
-			"configMaps": "20",
-			"limitsCpu": "2000m",
-			"limitsMemory": "4000Mi",
-			"persistentVolumeClaims": "20",
-			"pods": "100",
-			"replicationControllers": "25",
-			"requestsStorage": "50000Mi",
-			"secrets": "20",
-			"services": "50",
-			"servicesLoadBalancers": "0",
-			"servicesNodePorts": "0"
-			},
-			"usedLimit": { }
-			}
-		`
-	case "Elite":
-		return `"namespaceDefaultResourceQuota": {
-			"limit": {
-			"configMaps": "20",
-			"limitsCpu": "4000m",
-			"limitsMemory": "8000Mi",
-			"persistentVolumeClaims": "30",
-			"pods": "200",
-			"replicationControllers": "50",
-			"requestsStorage": "200000Mi",
-			"secrets": "20",
-			"services": "100",
-			"servicesLoadBalancers": "0",
-			"servicesNodePorts": "0"
-			}
-			},
-			"resourceQuota": {
-			"limit": {
-			"configMaps": "20",
-			"limitsCpu": "4000m",
-			"limitsMemory": "8000Mi",
-			"persistentVolumeClaims": "30",
-			"pods": "200",
-			"replicationControllers": "50",
-			"requestsStorage": "200000Mi",
-			"secrets": "20",
-			"services": "100",
-			"servicesLoadBalancers": "0",
-			"servicesNodePorts": "0"
-			},
-			"usedLimit": { }
-			}
-		`
+	case STARTER:
+		return &Limit{ConfigMaps: 10, LimitsCpu: "1000m", LimitsMemory: "2000Mi", PersistentVolumeClaims: 10, Pods: 50, ReplicationControllers: 15, RequestsStorage: "50000Mi", Secrets: 20, Services: 50, ServicesLoadBalancers: 0, ServicesNodePorts: 0}, &Limit{ConfigMaps: 10, LimitsCpu: "1000m", LimitsMemory: "2000Mi", PersistentVolumeClaims: 10, Pods: 100, ReplicationControllers: 30, RequestsStorage: "50000Mi", Secrets: 20, Services: 50, ServicesLoadBalancers: 0, ServicesNodePorts: 0}
+	case PRO:
+		return &Limit{ConfigMaps: 20, LimitsCpu: "2000m", LimitsMemory: "4000Mi", PersistentVolumeClaims: 20, Pods: 100, ReplicationControllers: 25, RequestsStorage: "50000Mi", Secrets: 20, Services: 50, ServicesLoadBalancers: 0, ServicesNodePorts: 0}, &Limit{ConfigMaps: 20, LimitsCpu: "2000m", LimitsMemory: "4000Mi", PersistentVolumeClaims: 20, Pods: 100, ReplicationControllers: 25, RequestsStorage: "50000Mi", Secrets: 20, Services: 50, ServicesLoadBalancers: 0, ServicesNodePorts: 0}
+
+	case ELITE:
+		return &Limit{ConfigMaps: 20, LimitsCpu: "4000m", LimitsMemory: "8000Mi", PersistentVolumeClaims: 30, Pods: 200, ReplicationControllers: 50, RequestsStorage: "200000Mi", Secrets: 20, Services: 100, ServicesLoadBalancers: 0, ServicesNodePorts: 0}, &Limit{ConfigMaps: 20, LimitsCpu: "4000m", LimitsMemory: "8000Mi", PersistentVolumeClaims: 30, Pods: 200, ReplicationControllers: 50, RequestsStorage: "200000Mi", Secrets: 20, Services: 100, ServicesLoadBalancers: 0, ServicesNodePorts: 0}
 	}
-	return "nil"
+	return nil, nil
 }
 
 func generateRandomString(n int) string {
@@ -882,7 +828,6 @@ func createBillingAccount(req ReqData, projectId string, t time.Time) (string, e
 			},
 		},
 	}
-
 
 	reqBodyJson, err := json.Marshal(reqBody)
 	if err != nil {
