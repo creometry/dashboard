@@ -827,6 +827,7 @@ func createBillingAccount(req ReqData, projectId string, t time.Time) (string, e
 				Plan:              req.Plan,
 			},
 		},
+	Balance: req.Balance,	
 	}
 
 	reqBodyJson, err := json.Marshal(reqBody)

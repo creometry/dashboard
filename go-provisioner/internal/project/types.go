@@ -23,6 +23,7 @@ type ReqData struct {
 	TaxId            string `json:"taxId"`
 	Phone            string `json:"phone"`
 	Email            string `json:"email"`
+	Balance 		 float64 `json:"balance"`
 }
 
 type ReqDataNewUser struct {
@@ -225,6 +226,7 @@ type ReqDataCreateBillingAccount struct {
 	BillingAdmins []Admin   `json:"billingAdmins"`
 	Company       Company   `json:"company"`
 	Projects      []Project `json:"projects"`
+	Balance 	  float64   `json:"balance"`
 }
 
 type Company struct {
