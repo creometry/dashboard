@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/Creometry/dashboard/go-provisioner/auth"
-	"github.com/Creometry/dashboard/go-provisioner/utils"
+	"github.com/Seifbarouni/fast-utils/utils"
 	"github.com/google/uuid"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -312,23 +312,33 @@ func Login(username string, password string) (string, string, string, error) {
 
 }
 
-func Register(username string) (string, string, string, string, error) {
+func Register(username,email string) (error) {
 
 	rancherURL, err := utils.GetVariable("config", "RANCHER_URL")
 	if err != nil {
-		return "", "", "", "", err
+		return err
 	}
 
 	rancherToken, err := utils.GetVariable("secrets", "RANCHER_TOKEN")
 	if err != nil {
-		return "", "", "", "", err
+		return err
+	}
+
+	creometryGmail, err := utils.GetVariable("config", "CREOMETRY_GMAIL")
+	if err != nil {
+		return err
+	}
+
+	gmailPassword, err := utils.GetVariable("secrets", "GMAIL_PASSWORD")
+	if err != nil {
+		return err
 	}
 
 	password := generateRandomString(16)
 
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s%s", rancherURL, "/v3/users"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"username":"%s","mustChangePassword": true,"password": "%s","enabled": true,"type":"user"}`, username, password))))
 	if err != nil {
-		return "", "", "", "", err
+		return err
 	}
 
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", rancherToken))
@@ -338,7 +348,7 @@ func Register(username string) (string, string, string, string, error) {
 	resp, err := client.Do(req)
 
 	if err != nil {
-		return "", "", "", "", err
+		return err
 	}
 
 	defer resp.Body.Close()
@@ -347,25 +357,99 @@ func Register(username string) (string, string, string, string, error) {
 	dt := RespDataCreateUser{}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return "", "", "", "", err
+		return err
 	}
 	err = json.Unmarshal(body, &dt)
 	if err != nil {
-		return "", "", "", "", err
+		return err
 	}
 
 	err = createGlobalRoleBinding(dt.Id)
 
 	if err != nil {
-		return "", "", "", "", err
+		return err
 	}
-	// login user
-	id, token, uuid, err := Login(username, password)
+	// send email
+	err = utils.SendEmail(
+		creometryGmail,
+		email,
+		// needs to be changed to the actual creometry gmail password
+		gmailPassword,
+		"Creometry Registration",
+		fmt.Sprintf("Password: %s\nYou can use this password to log in to Creometry and Rancher dashboards.",password),
+	)
+
 	if err != nil {
-		return "", "", "", "", err
+		return err
+	}
+	
+	return nil
+}
+
+func ResetPassword(userId,email,newPassword string) error{
+
+	rancherURL, err := utils.GetVariable("config", "RANCHER_URL")
+	if err != nil {
+		return err
 	}
 
-	return id, token, password, uuid, nil
+	rancherToken, err := utils.GetVariable("secrets", "RANCHER_TOKEN")
+	if err != nil {
+		return err
+	}
+
+	creometryGmail, err := utils.GetVariable("config", "CREOMETRY_GMAIL")
+	if err != nil {
+		return err
+	}
+
+	gmailPassword, err := utils.GetVariable("secrets", "GMAIL_PASSWORD")
+	if err != nil {
+		return err
+	}
+
+	var password string
+	if newPassword == "" {
+		password = generateRandomString(16)
+	} else {
+		password = newPassword
+	}
+
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s%s%s?action=setpassword", rancherURL, "/v3/users/",userId), bytes.NewBuffer([]byte(fmt.Sprintf(`{"newPassword":"%s"}`,password))))
+
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", rancherToken))
+
+	client := &http.Client{}
+
+	resp, err := client.Do(req)
+
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode != 200 {
+		return errors.New("error resetting password")
+	}
+
+	// send email
+	err = utils.SendEmail(
+		creometryGmail,
+		email,
+		// needs to be changed to the actual creometry gmail password
+		gmailPassword,
+		"Creometry Password Reset",
+		"Your password has been reset successfully.",
+	)
+
+	if err != nil {
+		return err
+	}
+	
+	return nil
 }
 
 // Local functions

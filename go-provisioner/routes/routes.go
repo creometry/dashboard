@@ -14,6 +14,7 @@ func CreateRoutes(app *fiber.App) {
 	v1.Post("/provisionProject", pr.ProvisionProject)
 	v1.Post("/login", pr.Login)
 	v1.Post("/register", pr.Register)
+	v1.Post("/resetPassword", pr.ResetPassword)
 	v1.Get("/team/:projectId", pr.ListTeamMembers)
 	v1.Post("/team/:projectId/:userId", pr.AddTeamMember)
 	v1.Post("/kubeconfig", pr.GenerateKubeConfig)
