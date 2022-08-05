@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/Creometry/dashboard/go-provisioner/utils"
+	"github.com/Seifbarouni/fast-utils/utils"
 )
 
 // Exportable function

@@ -3,6 +3,7 @@ module github.com/Creometry/dashboard/go-provisioner
 go 1.18
 
 require (
+	github.com/Seifbarouni/fast-utils v0.0.2
 	github.com/gofiber/fiber/v2 v2.33.0
 	github.com/google/uuid v1.1.2
 	golang.org/x/oauth2 v0.0.0-20220524215830-622c5d57e401

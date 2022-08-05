@@ -6,7 +6,7 @@ import (
 
 	"github.com/Creometry/dashboard/go-provisioner/internal/project"
 	"github.com/Creometry/dashboard/go-provisioner/internal/team"
-	"github.com/Creometry/dashboard/go-provisioner/utils"
+	"github.com/Seifbarouni/fast-utils/utils"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -174,23 +174,40 @@ func Register(c *fiber.Ctx) error {
 			"error": "username is required",
 		})
 	}
-	id, token, password, uuid, err := project.Register(reqData.Username)
+	err := project.Register(reqData.Username, reqData.Email)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
 		})
 	}
 
-	if token == "" || id == "" || password == "" || uuid == "" {
+	return c.JSON(fiber.Map{
+		"message": "Email sent",
+	})
+}
+
+func ResetPassword(c *fiber.Ctx) error {
+	// get the token from the body
+	reqData := new(project.ReqDataResetPassword)
+	if err := c.BodyParser(reqData); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "error registering user",
+			"error": err.Error(),
+		})
+	}
+	// check if the request body is valid
+	if err:=reqData.Validate() ;err!= nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err,
+		})
+	}
+	err := project.ResetPassword(reqData.UserId, reqData.Email, reqData.NewPassword)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
 		})
 	}
 
 	return c.JSON(fiber.Map{
-		"token":    token,
-		"userId":   id,
-		"password": password,
-		"uuid":     uuid,
+		"message": "Email sent",
 	})
 }

@@ -41,6 +41,7 @@ type ReqDataLogin struct {
 
 type ReqDataRegister struct {
 	Username string `json:"username"`
+	Email   string `json:"email"`
 }
 
 func (r *ReqDataLogin) Validate() error {
@@ -253,4 +254,20 @@ type ReqDataAddProjectToBillingAccount struct {
 	CreationTimeStamp  time.Time `json:"creationTimeStamp"`
 	Plan               string    `json:"plan"`
 	State              string    `json:"state"`
+}
+
+type ReqDataResetPassword struct {
+	UserId string `json:"userId"`
+	Email string `json:"email"`
+	NewPassword string `json:"newPassword"`
+}
+
+func (r *ReqDataResetPassword) Validate() error {
+	if r.UserId == "" {
+		return fmt.Errorf("user id is required")
+	}
+	if r.Email == "" {
+		return fmt.Errorf("email is required")
+	}
+	return nil
 }
