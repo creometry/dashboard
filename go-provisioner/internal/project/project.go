@@ -16,6 +16,7 @@ import (
 	"github.com/Creometry/dashboard/go-provisioner/auth"
 	"github.com/Seifbarouni/fast-utils/utils"
 	"github.com/google/uuid"
+	"github.com/zemirco/keycloak"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -314,15 +315,15 @@ func Login(username string, password string) (string, string, string, error) {
 
 func Register(username,email string) (error) {
 
-	rancherURL, err := utils.GetVariable("config", "RANCHER_URL")
-	if err != nil {
-		return err
-	}
+	// rancherURL, err := utils.GetVariable("config", "RANCHER_URL")
+	// if err != nil {
+	// 	return err
+	// }
 
-	rancherToken, err := utils.GetVariable("secrets", "RANCHER_TOKEN")
-	if err != nil {
-		return err
-	}
+	// rancherToken, err := utils.GetVariable("secrets", "RANCHER_TOKEN")
+	// if err != nil {
+	// 	return err
+	// }
 
 	creometryGmail, err := utils.GetVariable("config", "CREOMETRY_GMAIL")
 	if err != nil {
@@ -336,39 +337,47 @@ func Register(username,email string) (error) {
 
 	password := generateRandomString(16)
 
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s%s", rancherURL, "/v3/users"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"username":"%s","mustChangePassword": true,"password": "%s","enabled": true,"type":"user"}`, username, password))))
+	// req, err := http.NewRequest("POST", fmt.Sprintf("%s%s", rancherURL, "/v3/users"), bytes.NewBuffer([]byte(fmt.Sprintf(`{"username":"%s","mustChangePassword": true,"password": "%s","enabled": true,"type":"user"}`, username, password))))
+	// if err != nil {
+	// 	return err
+	// }
+
+	// req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", rancherToken))
+
+	// client := &http.Client{}
+
+	// resp, err := client.Do(req)
+
+	// if err != nil {
+	// 	return err
+	// }
+
+	// defer resp.Body.Close()
+
+	// // parse response body
+	// dt := RespDataCreateUser{}
+	// body, err := ioutil.ReadAll(resp.Body)
+	// if err != nil {
+	// 	return err
+	// }
+	// err = json.Unmarshal(body, &dt)
+	// if err != nil {
+	// 	return err
+	// }
+
+	// err = createGlobalRoleBinding(dt.Id)
+
+	// if err != nil {
+	// 	return err
+	// }
+	
+	// create user in keycloak
+	err = createKeyCloakUser(username,email,"","","creometry", password)
+
 	if err != nil {
 		return err
 	}
 
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", rancherToken))
-
-	client := &http.Client{}
-
-	resp, err := client.Do(req)
-
-	if err != nil {
-		return err
-	}
-
-	defer resp.Body.Close()
-
-	// parse response body
-	dt := RespDataCreateUser{}
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-	err = json.Unmarshal(body, &dt)
-	if err != nil {
-		return err
-	}
-
-	err = createGlobalRoleBinding(dt.Id)
-
-	if err != nil {
-		return err
-	}
 	// send email
 	err = utils.SendEmail(
 		creometryGmail,
@@ -930,4 +939,52 @@ func addProjectToBillingAccount(billingAccountId uuid.UUID, projectId string, t 
 	}
 
 	return dt.ProjectId, nil
+}
+
+
+func createKeyCloakUser(username,email,firstName,lastName,realm, password string) error{
+    ctx := context.Background()
+
+	user := &keycloak.User{
+		Enabled:   keycloak.Bool(true),
+		Username:  keycloak.String(username),
+		Email:     keycloak.String(email),
+		FirstName: keycloak.String(firstName),
+		LastName:  keycloak.String(lastName),
+        EmailVerified: keycloak.Bool(false),
+        RequiredActions: []string{
+            "UPDATE_PASSWORD",
+        },
+	}
+
+	res, err := auth.K.Users.Create(ctx, realm, user)
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode != 201 {
+        return fmt.Errorf("unexpected status code: %d", res.StatusCode)
+    }
+
+	location:=res.Header.Get("location")
+    // extract the user id from the location header, it is the last part of the url
+    userId := location[len(location)-36:]
+
+
+    res,err=auth.K.Users.ResetPassword(ctx, realm, userId, &keycloak.Credential{
+        Type: keycloak.String("password"),
+        Value: keycloak.String(password),
+        Temporary: keycloak.Bool(true),
+    })
+
+    if err != nil {
+        return err
+    }
+
+    if res.StatusCode != 204 {
+        return fmt.Errorf("unexpected status code: %d", res.StatusCode)
+	}
+	log.Printf("user %s created\nID: %s", username,userId)
+
+	return nil
 }

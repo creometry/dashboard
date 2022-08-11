@@ -12,6 +12,7 @@ import (
 func main() {
 
 	auth.CreateInClusterClient()
+	auth.InitKeycloakClient()
 	//auth.CreateOutClusterClient()
 	app := fiber.New()
 

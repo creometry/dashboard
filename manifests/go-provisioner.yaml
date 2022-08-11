@@ -82,6 +82,9 @@ data:
   RANCHER_URL: https://tn.cloud.creometry.com
   PAYMEE_URL: https://sandbox.paymee.tn
   BILLING_URL: http://localhost:8080  
+  CREOMETRY_GMAIL: seif.barouni11@gmail.com
+  KEYCLOAK_URL: https://id.creometry.com
+  KEYCLOAK_ADMIN_NAME: seif
 kind: ConfigMap
 metadata:
   creationTimestamp: null
