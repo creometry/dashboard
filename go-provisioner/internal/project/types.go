@@ -9,21 +9,21 @@ import (
 
 type ReqData struct {
 	// TODO: add billing account data and validte it
-	UsrProjectName   string `json:"projectName"`
-	BillingAccountId string `json:"billingAccountId"`
-	PaymentToken     string `json:"paymentToken"`
-	UserId           string `json:"userId"`
-	UUID             string `json:"uuid"`
-	Plan             string `json:"plan"`
-	GitRepoName      string `json:"gitRepoName"`
-	GitRepoBranch    string `json:"gitRepoBranch"`
-	GitRepoUrl       string `json:"gitRepoUrl"`
-	IsCompany        bool   `json:"isCompany"`
-	CompanyName      string `json:"companyName"`
-	TaxId            string `json:"taxId"`
-	Phone            string `json:"phone"`
-	Email            string `json:"email"`
-	Balance 		 float64 `json:"balance"`
+	UsrProjectName   string  `json:"projectName"`
+	BillingAccountId string  `json:"billingAccountId"`
+	PaymentToken     string  `json:"paymentToken"`
+	UserId           string  `json:"userId"`
+	UUID             string  `json:"uuid"`
+	Plan             string  `json:"plan"`
+	GitRepoName      string  `json:"gitRepoName"`
+	GitRepoBranch    string  `json:"gitRepoBranch"`
+	GitRepoUrl       string  `json:"gitRepoUrl"`
+	IsCompany        bool    `json:"isCompany"`
+	CompanyName      string  `json:"companyName"`
+	TaxId            string  `json:"taxId"`
+	Phone            string  `json:"phone"`
+	Email            string  `json:"email"`
+	Balance          float64 `json:"balance"`
 }
 
 type ReqDataNewUser struct {
@@ -42,7 +42,7 @@ type ReqDataLogin struct {
 
 type ReqDataRegister struct {
 	Username string `json:"username"`
-	Email   string `json:"email"`
+	Email    string `json:"email"`
 }
 
 func (r *ReqDataLogin) Validate() error {
@@ -226,7 +226,7 @@ type ReqDataCreateBillingAccount struct {
 	BillingAdmins []Admin   `json:"billingAdmins"`
 	Company       Company   `json:"company"`
 	Projects      []Project `json:"projects"`
-	Balance 	  float64   `json:"balance"`
+	Balance       float64   `json:"balance"`
 }
 
 type Company struct {
@@ -258,7 +258,6 @@ type ReqDataAddProjectToBillingAccount struct {
 	State              string    `json:"state"`
 }
 
-
 const (
 	STARTER   = "Starter"
 	PRO       = "Pro"
@@ -281,8 +280,8 @@ type Limit struct {
 }
 
 type ReqDataResetPassword struct {
-	UserId string `json:"userId"`
-	Email string `json:"email"`
+	UserId      string `json:"userId"`
+	Email       string `json:"email"`
 	NewPassword string `json:"newPassword"`
 }
 
@@ -296,3 +295,6 @@ func (r *ReqDataResetPassword) Validate() error {
 	return nil
 }
 
+type ExchangeCodeToTokenResponse struct {
+	AccessToken string `json:"access_token"`
+}

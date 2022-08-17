@@ -230,18 +230,18 @@ func AddUserToProject(userId string, projectId string) (RespDataRoleBinding, err
 
 }
 
-func GetUserByUsername(username string) (string, []string, error) {
-	rancherURL, err := utils.GetVariable("config", "RANCHER_URL")
-	if err != nil {
-		return "", []string{}, err
-	}
+func GetUserByUsername(username, region string) (string, []string, error) {
+	// rancherURL, err := utils.GetVariable("config", "RANCHER_URL")
+	// if err != nil {
+	// 	return "", []string{}, err
+	// }
 
 	rancherToken, err := utils.GetVariable("secrets", "RANCHER_TOKEN")
 	if err != nil {
 		return "", []string{}, err
 	}
 
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s%s%s", rancherURL, "/v3/users?username=", username), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s%s%s", region, "/v3/users?username=", username), nil)
 	if err != nil {
 		return "", []string{}, err
 	}
@@ -313,7 +313,7 @@ func Login(username string, password string) (string, string, string, error) {
 
 }
 
-func Register(username,email string) (error) {
+func Register(username, email string) error {
 
 	// rancherURL, err := utils.GetVariable("config", "RANCHER_URL")
 	// if err != nil {
@@ -370,9 +370,9 @@ func Register(username,email string) (error) {
 	// if err != nil {
 	// 	return err
 	// }
-	
+
 	// create user in keycloak
-	err = createKeyCloakUser(username,email,"","","creometry", password)
+	err = createKeyCloakUser(username, email, "", "", "creometry", password)
 
 	if err != nil {
 		return err
@@ -385,17 +385,17 @@ func Register(username,email string) (error) {
 		// needs to be changed to the actual creometry gmail password
 		gmailPassword,
 		"Creometry Registration",
-		fmt.Sprintf("Password: %s\nYou can use this password to log in to Creometry and Rancher dashboards.",password),
+		fmt.Sprintf("Password: %s\nYou can use this password to log in to Creometry and Rancher dashboards.", password),
 	)
 
 	if err != nil {
 		return err
 	}
-	
+
 	return nil
 }
 
-func ResetPassword(userId,email,newPassword string) error{
+func ResetPassword(userId, email, newPassword string) error {
 
 	rancherURL, err := utils.GetVariable("config", "RANCHER_URL")
 	if err != nil {
@@ -424,7 +424,7 @@ func ResetPassword(userId,email,newPassword string) error{
 		password = newPassword
 	}
 
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s%s%s?action=setpassword", rancherURL, "/v3/users/",userId), bytes.NewBuffer([]byte(fmt.Sprintf(`{"newPassword":"%s"}`,password))))
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s%s%s?action=setpassword", rancherURL, "/v3/users/", userId), bytes.NewBuffer([]byte(fmt.Sprintf(`{"newPassword":"%s"}`, password))))
 
 	if err != nil {
 		return err
@@ -457,14 +457,14 @@ func ResetPassword(userId,email,newPassword string) error{
 	if err != nil {
 		return err
 	}
-	
+
 	return nil
 }
 
 // Local functions
 
 func createRancherProject(usrProjectName string, plan string) (string, int64, string, error) {
-	nsDefaultResourceQuotaLimit,resourceQuotaLimit := genLimitsFromPlan(plan)
+	nsDefaultResourceQuotaLimit, resourceQuotaLimit := genLimitsFromPlan(plan)
 	if nsDefaultResourceQuotaLimit == nil && resourceQuotaLimit == nil {
 		return "", 0, "", fmt.Errorf("invalid plan")
 	}
@@ -836,7 +836,7 @@ func createBillingAccount(req ReqData, projectId string, t time.Time) (string, e
 				Plan:              req.Plan,
 			},
 		},
-	Balance: req.Balance,	
+		Balance: req.Balance,
 	}
 
 	reqBodyJson, err := json.Marshal(reqBody)
@@ -941,20 +941,19 @@ func addProjectToBillingAccount(billingAccountId uuid.UUID, projectId string, t 
 	return dt.ProjectId, nil
 }
 
-
-func createKeyCloakUser(username,email,firstName,lastName,realm, password string) error{
-    ctx := context.Background()
+func createKeyCloakUser(username, email, firstName, lastName, realm, password string) error {
+	ctx := context.Background()
 
 	user := &keycloak.User{
-		Enabled:   keycloak.Bool(true),
-		Username:  keycloak.String(username),
-		Email:     keycloak.String(email),
-		FirstName: keycloak.String(firstName),
-		LastName:  keycloak.String(lastName),
-        EmailVerified: keycloak.Bool(false),
-        RequiredActions: []string{
-            "UPDATE_PASSWORD",
-        },
+		Enabled:       keycloak.Bool(true),
+		Username:      keycloak.String(username),
+		Email:         keycloak.String(email),
+		FirstName:     keycloak.String(firstName),
+		LastName:      keycloak.String(lastName),
+		EmailVerified: keycloak.Bool(false),
+		RequiredActions: []string{
+			"UPDATE_PASSWORD",
+		},
 	}
 
 	res, err := auth.K.Users.Create(ctx, realm, user)
@@ -963,28 +962,106 @@ func createKeyCloakUser(username,email,firstName,lastName,realm, password string
 	}
 
 	if res.StatusCode != 201 {
-        return fmt.Errorf("unexpected status code: %d", res.StatusCode)
-    }
-
-	location:=res.Header.Get("location")
-    // extract the user id from the location header, it is the last part of the url
-    userId := location[len(location)-36:]
-
-
-    res,err=auth.K.Users.ResetPassword(ctx, realm, userId, &keycloak.Credential{
-        Type: keycloak.String("password"),
-        Value: keycloak.String(password),
-        Temporary: keycloak.Bool(true),
-    })
-
-    if err != nil {
-        return err
-    }
-
-    if res.StatusCode != 204 {
-        return fmt.Errorf("unexpected status code: %d", res.StatusCode)
+		return fmt.Errorf("unexpected status code: %d", res.StatusCode)
 	}
-	log.Printf("user %s created\nID: %s", username,userId)
+
+	location := res.Header.Get("location")
+	// extract the user id from the location header, it is the last part of the url
+	userId := location[len(location)-36:]
+
+	res, err = auth.K.Users.ResetPassword(ctx, realm, userId, &keycloak.Credential{
+		Type:      keycloak.String("password"),
+		Value:     keycloak.String(password),
+		Temporary: keycloak.Bool(true),
+	})
+
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode != 204 {
+		return fmt.Errorf("unexpected status code: %d", res.StatusCode)
+	}
+	log.Printf("user %s created\nID: %s", username, userId)
 
 	return nil
+}
+
+/*func registerKeycloakUser(code string) (string, error) {
+
+	rancherURL, err := utils.GetVariable("config", "RANCHER_URL")
+	if err != nil {
+		return "", err
+	}
+
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/v3-public/keyCloakProviders/keycloak?action=login", rancherURL), bytes.NewBuffer([]byte(`{"code":"`+code+`"}`)))
+
+	if err != nil {
+		return "", err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	client := &http.Client{}
+
+	resp, err := client.Do(req)
+
+	if err != nil {
+		return "", err
+	}
+
+	defer resp.Body.Close()
+	// parse response body
+	dt := ExchangeCodeToTokenResponse{}
+	body, err := ioutil.ReadAll(resp.Body)
+
+	if err != nil {
+		return "", err
+	}
+	err = json.Unmarshal(body, &dt)
+
+	if err != nil {
+		return "", err
+	}
+
+	return dt.AccessToken, nil
+
+}*/
+
+type region struct {
+	Name    string `json:"name"`
+	Cluster string `json:"cluster"`
+}
+
+type project struct {
+	Name string `json:"name"`
+}
+
+var regions = []region{
+	{
+		Name:    "us-east-1",
+		Cluster: "us-east-1",
+	},
+}
+
+var projects = []project{
+	{Name: "default"},
+}
+
+func getUserProjectsByRegion(region, clusterId, userId string) []project {
+	// returns all the projects in a region that the user has access to
+	return projects
+}
+func getAllUserProjects(username string) []project {
+	// for each region, get the userId and get all the projects that the user has access to
+	prs := []project{}
+	for _, region := range regions {
+		//1
+		userId, _, _ := GetUserByUsername(username, region.Name)
+		//2
+		p := getUserProjectsByRegion(region.Name, region.Cluster, userId)
+		//3
+		prs = append(prs, p...)
+	}
+	//4
+	return prs
 }
